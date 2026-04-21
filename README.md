@@ -2,7 +2,7 @@
 
 An interactive CFO simulation game built for the BCG exhibition booth.
 
-🎮 **[Play the game](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/)**
+🎮 **[Play the game](https://1tccdev.github.io/tcc-game/)**
 
 ---
 
