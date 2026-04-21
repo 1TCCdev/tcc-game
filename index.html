@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The $1B Decision — 1TCC</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#0d1b2e;--navy2:#122338;--navy3:#1a3050;--navy4:#0a1520;
+  --yellow:#f5a623;--yellow2:#ffd166;--ydim:rgba(245,166,35,0.13);--yglow:rgba(245,166,35,0.25);
+  --white:#fff;--w80:rgba(255,255,255,0.8);--w60:rgba(255,255,255,0.6);
+  --w30:rgba(255,255,255,0.3);--w15:rgba(255,255,255,0.13);--w10:rgba(255,255,255,0.08);
+  --green:#00d084;--gdim:rgba(0,208,132,0.12);
+  --red:#ff5252;--rdim:rgba(255,82,82,0.1);
+  --r4:4px;--r8:8px;--r12:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Barlow',sans-serif;background:var(--navy);color:var(--white);}
+/* Mobile: allow screens to scroll */
+@media(max-width:640px){
+  html,body{overflow:auto;height:auto;}
+  .screen{position:relative;inset:auto;min-height:100svh;padding:16px;}
+  .screen:not(.active){display:none;}
+  #s0{gap:14px;padding:20px 16px;}
+  .hero{font-size:clamp(44px,14vw,72px);}
+  .pulse{width:70px;height:70px;}
+  .lock{font-size:26px;}
+  .mode-cards{grid-template-columns:1fr;max-width:100%;}
+  .inputs-grid{grid-template-columns:1fr !important;}
+  #s-game{max-width:100%;padding-top:12px;height:auto;overflow:visible;justify-content:flex-start;}
+  .game-body{grid-template-columns:1fr;gap:10px;}
+  .game-right{order:-1;}
+  .chart-wrap canvas{max-height:90px !important;height:90px !important;}
+  .chart-headline{font-size:13px;}
+  .q-txt{font-size:13px;}
+  .opt{font-size:12px;padding:9px 12px;}
+  .btn-primary{font-size:15px;padding:13px 24px;width:100%;}
+  .btn-secondary{font-size:13px;padding:10px 18px;width:100%;}
+  #s-results{max-width:100%;gap:12px;justify-content:flex-start;padding-top:20px;}
+  .r-metrics{grid-template-columns:1fr;}
+  .r-card-val{font-size:22px;}
+  .topbar{margin-bottom:8px;}
+  .pdot{width:20px;height:4px;}
+  .results-actions{flex-direction:column;align-items:stretch;}
+}
+.bg{position:fixed;inset:0;z-index:0;}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(var(--w10) 1px,transparent 1px),linear-gradient(90deg,var(--w10) 1px,transparent 1px);background-size:56px 56px;}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;}
+.orb1{width:500px;height:500px;background:rgba(245,166,35,0.07);top:-150px;right:-100px;}
+.orb2{width:350px;height:350px;background:rgba(0,100,200,0.06);bottom:-80px;left:-80px;}
+.flash-overlay{position:fixed;inset:0;z-index:999;pointer-events:none;opacity:0;}
+.flash-overlay.green{background:rgba(0,208,132,0.18);animation:flashAnim .5s ease;}
+.flash-overlay.red{background:rgba(255,82,82,0.2);animation:flashAnim .5s ease;}
+@keyframes flashAnim{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+.screen{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .35s ease;}
+.screen.active{opacity:1;pointer-events:all;}
+.logo-tcc{display:flex;align-items:center;gap:9px;}
+.logo-box{background:var(--yellow);color:#000;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;}
+.logo-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;letter-spacing:.02em;}
+.co-logo-placeholder{width:32px;height:32px;border-radius:4px;background:var(--navy3);border:1px solid var(--w15);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--yellow);}
+.co-name-txt{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;color:var(--w60);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--r4);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.07em;text-transform:uppercase;transition:all .2s;}
+.btn-primary{background:var(--yellow);color:#000;font-size:17px;padding:15px 40px;}
+.btn-primary:hover{background:var(--yellow2);transform:translateY(-2px);box-shadow:0 10px 32px var(--yglow);}
+.btn-secondary{background:transparent;color:var(--w60);font-size:14px;padding:12px 24px;border:1px solid var(--w15);}
+.btn-secondary:hover{border-color:var(--w30);color:var(--white);}
+.inp-group{display:flex;flex-direction:column;gap:7px;}
+.inp-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.14em;color:var(--w60);text-transform:uppercase;}
+.inp-row{display:flex;align-items:center;background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r4);overflow:hidden;transition:border-color .2s,box-shadow .2s;}
+.inp-row:focus-within{border-color:var(--yellow);box-shadow:0 0 0 3px var(--ydim);}
+.inp-pre{padding:0 12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--yellow);background:rgba(245,166,35,0.07);border-right:1px solid var(--w15);height:48px;display:flex;align-items:center;white-space:nowrap;}
+.inp-field{flex:1;background:transparent;border:none;outline:none;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:18px;padding:0 14px;height:48px;}
+.inp-field::placeholder{color:var(--w30);}
+.inp-suf{padding:0 12px;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--w30);}
+.inp-select{flex:1;background:transparent;border:none;outline:none;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:16px;padding:0 14px;height:48px;cursor:pointer;}
+.inp-select option{background:var(--navy2);}
+.topbar{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.pdots{display:flex;gap:6px;}
+.pdot{width:26px;height:5px;border-radius:3px;background:var(--w10);border:1px solid var(--w15);transition:all .3s;}
+.pdot.done{background:var(--yellow);border-color:var(--yellow);}
+.pdot.active{background:rgba(245,166,35,.38);border-color:var(--yellow);}
+.score-box{display:flex;align-items:center;gap:7px;}
+.score-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--w60);letter-spacing:.1em;text-transform:uppercase;}
+.score-n{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--yellow);}
+#q-timer-txt{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--w60);letter-spacing:.08em;margin-left:10px;}
+#q-timer-txt.urg{color:var(--red);animation:blink2 .5s ease-in-out infinite;}
+@keyframes blink2{0%,100%{opacity:1}50%{opacity:.35}}
+.tbar{width:100%;height:3px;background:var(--w10);border-radius:2px;margin-bottom:10px;overflow:hidden;}
+.tbar-f{height:100%;background:var(--yellow);border-radius:2px;transition:width .1s linear,background .3s;box-shadow:0 0 5px var(--yglow);}
+.chart-wrap{width:100%;background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r8);padding:10px 12px 8px;position:relative;}
+.chart-wrap canvas{max-height:130px !important;height:130px !important;}
+.chart-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.12em;color:var(--w30);text-transform:uppercase;margin-bottom:4px;}
+.chart-headline{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--yellow);margin-bottom:4px;}
+.qcard{width:100%;background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r8);padding:16px 20px;position:relative;overflow:hidden;margin-bottom:10px;}
+.qcard::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--yellow);}
+.q-ctx{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.14em;color:var(--yellow);text-transform:uppercase;margin-bottom:5px;}
+.q-txt{font-size:14px;font-weight:500;line-height:1.5;color:var(--white);}
+.opts{width:100%;display:flex;flex-direction:column;gap:7px;margin-bottom:9px;}
+.opt{width:100%;background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r8);padding:10px 16px;cursor:pointer;text-align:left;display:flex;align-items:flex-start;gap:12px;transition:all .18s;color:var(--white);font-family:'Barlow',sans-serif;font-size:13px;line-height:1.45;}
+.opt:hover:not(:disabled){border-color:var(--yellow);background:var(--ydim);transform:translateX(3px);}
+.opt:disabled{cursor:default;}
+.opt.correct{border-color:var(--green);background:var(--gdim);}
+.opt.correct.flash{animation:optFlashGreen .5s ease;}
+.opt.wrong{border-color:var(--red);background:var(--rdim);opacity:.65;}
+.opt.wrong.flash{animation:optFlashRed .5s ease;}
+@keyframes optFlashGreen{0%{background:rgba(0,208,132,.5)}100%{background:var(--gdim)}}
+@keyframes optFlashRed{0%{background:rgba(255,82,82,.5)}100%{background:var(--rdim)}}
+.opt-l{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--yellow);flex-shrink:0;width:20px;margin-top:1px;}
+.opt.correct .opt-l{color:var(--green);}
+.opt.wrong .opt-l{color:var(--red);}
+.opt-ic{margin-left:auto;font-size:13px;flex-shrink:0;margin-top:1px;}
+.fb{width:100%;border-radius:var(--r8);padding:11px 16px;display:none;gap:10px;align-items:flex-start;margin-bottom:8px;}
+.fb.show{display:flex;animation:fadeUp .28s ease;}
+.fb.ok{background:var(--gdim);border:1px solid rgba(0,208,132,.28);}
+.fb.bad{background:var(--rdim);border:1px solid rgba(255,82,82,.22);}
+.fb-ic{font-size:14px;flex-shrink:0;}
+.fb-tx{font-size:12px;color:var(--w60);line-height:1.5;}
+.fb-tx strong{color:var(--white);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+#s0{gap:20px;text-align:center;}
+.hero{font-family:'Barlow Condensed',sans-serif;font-size:clamp(50px,7vw,88px);font-weight:800;line-height:.95;text-transform:uppercase;letter-spacing:-.01em;}
+.hero em{color:var(--yellow);font-style:italic;}
+.hero .sub{font-size:clamp(24px,3.5vw,40px);color:var(--w60);font-weight:600;}
+.tagline{font-size:15px;color:var(--w60);max-width:460px;line-height:1.6;font-weight:300;}
+.pills{display:flex;gap:8px;justify-content:center;align-items:center;}
+.pill{padding:5px 13px;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;}
+.pill-y{background:var(--yellow);color:#000;}
+.pill-o{border:1px solid var(--w15);color:var(--w60);}
+.pulse{width:90px;height:90px;border-radius:50%;border:1px solid var(--yellow);display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;}
+.pulse::before,.pulse::after{content:'';position:absolute;inset:-13px;border-radius:50%;border:1px solid rgba(245,166,35,.22);animation:pulseR 2s ease-out infinite;}
+.pulse::after{animation-delay:1s;}
+@keyframes pulseR{from{transform:scale(1);opacity:.5}to{transform:scale(1.45);opacity:0}}
+.lock{font-size:32px;animation:bob 2s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.blink-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);animation:bd 1.4s ease-in-out infinite;}
+@keyframes bd{0%,100%{opacity:1}50%{opacity:.2}}
+.timer-pill{display:inline-flex;align-items:center;gap:6px;background:var(--w10);border:1px solid var(--w15);border-radius:100px;padding:6px 16px;font-size:12px;color:var(--w60);font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;}
+#s-mode{gap:22px;}
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:580px;}
+.mode-card{background:var(--navy2);border:2px solid var(--w15);border-radius:var(--r12);padding:22px 20px;cursor:pointer;text-align:left;transition:all .2s;}
+.mode-card:hover,.mode-card.sel{border-color:var(--yellow);background:var(--ydim);}
+.mode-card-icon{font-size:24px;margin-bottom:10px;}
+.mode-card-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;margin-bottom:5px;}
+.mode-card-desc{font-size:12px;color:var(--w60);line-height:1.5;}
+/* GAME */
+#s-game{max-width:980px;width:100%;justify-content:flex-start;padding-top:18px;gap:0;height:100%;overflow:auto;}
+.game-body{display:grid;grid-template-columns:1fr 260px;gap:14px;width:100%;align-items:start;flex:1;}
+.game-left{display:flex;flex-direction:column;gap:9px;min-width:0;}
+.game-right{display:flex;flex-direction:column;}
+/* RESULTS */
+#s-results{max-width:720px;width:100%;gap:18px;}
+.r-metrics{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;}
+.r-card{background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r12);padding:20px 22px;position:relative;overflow:hidden;}
+.r-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--yellow);}
+.r-card.green-top::before{background:var(--green);}
+.r-card-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.13em;color:var(--w30);text-transform:uppercase;margin-bottom:8px;}
+.r-card-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--white);line-height:1.1;}
+.r-card-val .pos{color:var(--green);}
+.r-card-sub{font-size:12px;color:var(--w60);margin-top:6px;line-height:1.5;}
+.r-card-disc{font-size:10px;color:var(--w30);margin-top:6px;line-height:1.4;}
+.milestone-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.35);border-radius:4px;padding:5px 10px;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--yellow);margin-top:8px;}
+.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.qr-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.1em;color:var(--w30);text-transform:uppercase;}
+.qr-img{width:88px;height:88px;border-radius:var(--r4);background:var(--white);padding:4px;}
+/* EMAIL */
+#s-email{gap:0;}
+.email-wrap{width:100%;max-width:460px;background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r12);padding:28px 30px;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;}
+.email-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;}
+.email-sub{font-size:13px;color:var(--w60);line-height:1.6;max-width:340px;}
+.email-inp-row{display:flex;width:100%;background:var(--navy3);border:1px solid var(--w15);border-radius:var(--r4);overflow:hidden;transition:border-color .2s;}
+.email-inp-row:focus-within{border-color:var(--yellow);}
+.email-inp{flex:1;background:transparent;border:none;outline:none;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;padding:0 14px;height:44px;}
+.email-inp::placeholder{color:var(--w30);}
+#s-confirm{text-align:center;}
+/* LEADS */
+#s-leads{max-width:960px;width:100%;gap:14px;}
+table.leads{width:100%;border-collapse:collapse;font-size:11px;}
+table.leads th{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.1em;color:var(--w60);text-transform:uppercase;padding:7px 10px;border-bottom:1px solid var(--w15);text-align:left;}
+table.leads td{padding:7px 10px;border-bottom:1px solid var(--w10);color:var(--w80);}
+table.leads tr:hover td{background:var(--w10);}
+.lead-table-wrap{width:100%;overflow-x:auto;}
+.ptcl{position:fixed;pointer-events:none;z-index:200;animation:pfly 1.4s ease-out forwards;font-size:16px;}
+@keyframes pfly{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-140px)}}
+
+/* TICKER LOOKUP */
+.ticker-lookup-wrap{width:100%;margin-bottom:14px;}
+.ticker-lookup-row{display:flex;gap:0;background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r4);overflow:hidden;transition:border-color .2s;}
+.ticker-lookup-row:focus-within{border-color:var(--yellow);box-shadow:0 0 0 3px var(--ydim);}
+.ticker-lookup-inp{flex:1;background:transparent;border:none;outline:none;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;padding:0 16px;height:52px;text-transform:uppercase;letter-spacing:.06em;}
+.ticker-lookup-inp::placeholder{color:var(--w30);font-size:15px;font-weight:400;letter-spacing:.02em;text-transform:none;}
+.ticker-lookup-btn{background:var(--yellow);color:#000;border:none;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:0 22px;cursor:pointer;white-space:nowrap;transition:background .2s;}
+.ticker-lookup-btn:hover{background:var(--yellow2);}
+.ticker-suggestions{position:absolute;z-index:100;background:var(--navy2);border:1px solid var(--yellow);border-top:none;border-radius:0 0 var(--r8) var(--r8);width:100%;max-height:200px;overflow-y:auto;display:none;}
+.ticker-suggestions.show{display:block;}
+.ticker-suggestion{padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:background .15s;}
+.ticker-suggestion:hover,.ticker-suggestion.active{background:var(--ydim);}
+.ts-ticker{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--yellow);min-width:52px;}
+.ts-name{font-size:12px;color:var(--w60);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ts-rating{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--w30);}
+.ticker-match-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gdim);border:1px solid rgba(0,208,132,.3);color:var(--green);font-family:'Barlow Condensed',sans-serif;font-size:11px;padding:4px 10px;border-radius:3px;margin-bottom:12px;display:none;}
+.ticker-match-badge.show{display:inline-flex;}
+.ticker-or-divider{text-align:center;font-size:11px;color:var(--w30);font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;margin:10px 0;position:relative;}
+.ticker-or-divider::before,.ticker-or-divider::after{content:'';position:absolute;top:50%;width:44%;height:1px;background:var(--w15);}
+.ticker-or-divider::before{left:0;}
+.ticker-or-divider::after{right:0;}
+
+.cp-logo-ph{width:40px;height:40px;border-radius:6px;background:var(--navy3);border:1px solid var(--w15);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--yellow);flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="bg"><div class="bg-grid"></div><div class="bg-orb orb1"></div><div class="bg-orb orb2"></div></div>
+<div class="flash-overlay" id="flash-overlay"></div>
+
+<!-- S0: ATTRACT -->
+<div class="screen active" id="s0">
+  <div class="pulse"><div class="lock">🔒</div></div>
+  <div class="pills">
+    <span class="pill pill-y">1TCC</span>
+    <span style="color:var(--w30);font-size:14px">×</span>
+    <span class="pill pill-o">BCG</span>
+  </div>
+  <div class="hero">The<br><em>$1B</em><br><span class="sub">Decision</span></div>
+  <div class="tagline">You are CFO of a major manufacturer. 5 decisions. Every choice moves your balance sheet — live.</div>
+  <div class="timer-pill"><div class="blink-dot"></div>2–3 min &nbsp;·&nbsp; 5 decisions &nbsp;·&nbsp; real financial impact</div>
+  <button class="btn btn-primary" onclick="goTo('s-mode')">▶ &nbsp;Take the CFO seat</button>
+</div>
+
+<!-- S-MODE -->
+<div class="screen" id="s-mode">
+  <div class="logo-tcc" style="margin-bottom:6px"><div class="logo-box">1</div><div class="logo-name">T<span style="color:var(--yellow)">CC</span></div></div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;margin-bottom:6px;">How do you want to play?</div>
+  <div style="font-size:14px;color:var(--w60);max-width:440px;text-align:center;line-height:1.55;margin-bottom:18px;">Use a pre-built company, or enter your own numbers for a personalised impact analysis.</div>
+  <div class="mode-cards">
+    <div class="mode-card" id="mc-demo" onclick="selectMode('demo')">
+      <div class="mode-card-icon">🎮</div>
+      <div class="mode-card-title">Demo mode</div>
+      <div class="mode-card-desc">Play with a pre-loaded fictional manufacturer. See the 1TCC impact instantly.</div>
+    </div>
+    <div class="mode-card" id="mc-live" onclick="selectMode('live')">
+      <div class="mode-card-icon">🏢</div>
+      <div class="mode-card-title">My company</div>
+      <div class="mode-card-desc">Enter your company data. The game uses your real numbers to calculate your personal impact analysis.</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:18px">
+    <button class="btn btn-secondary" onclick="goTo('s0')">← Back</button>
+    <button class="btn btn-primary" id="btn-mode-next" onclick="modeNext()" style="opacity:.4;pointer-events:none">Continue →</button>
+  </div>
+</div>
+
+<!-- S-INPUTS -->
+<div class="screen" id="s-ticker">
+  <div style="width:100%;max-width:680px">
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.14em;color:var(--yellow);text-transform:uppercase;margin-bottom:6px">YOUR COMPANY</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;">Tell us about your business</div>
+      <div style="font-size:13px;color:var(--w60);margin-top:4px;line-height:1.5;">Enter your ticker to auto-fill from our dataset, or type your numbers manually.</div>
+    </div>
+
+    <!-- TICKER DROPDOWN -->
+    <div class="ticker-lookup-wrap">
+      <div class="inp-label" style="margin-bottom:7px">Company ticker <span style="color:var(--w30);font-weight:400;font-family:'Barlow',sans-serif;text-transform:none;letter-spacing:0;font-size:11px">— 550 US &amp; European investment grade companies</span></div>
+      <div class="inp-row" style="overflow:visible;">
+        <div class="inp-pre">📈</div>
+        <select class="inp-select" id="ticker-search" onchange="applyTickerFromSelect(this.value)" style="font-size:14px;height:48px;">
+<option value="">— Search or select a company —</option>
+<option value="8TRA">8TRA — TRATON SE (BBB)</option>
+<option value="A">A — AGILENT TECHNOLOGIES INC (BBB+)</option>
+<option value="A2A">A2A — A2A SPA (BBB)</option>
+<option value="AAL">AAL — ANGLO AMERICAN PLC (BBB)</option>
+<option value="AAPL">AAPL — APPLE INC (AA+)</option>
+<option value="ABBN">ABBN — ABB LTD-REG (A)</option>
+<option value="ABBV">ABBV — ABBVIE INC (A-)</option>
+<option value="ABF">ABF — ASSOCIATED BRITISH FOODS PLC (A)</option>
+<option value="ABI">ABI — ANHEUSER-BUSCH INBEV SA/NV (A-)</option>
+<option value="ABT">ABT — ABBOTT LABORATORIES (AA-)</option>
+<option value="ABX">ABX — BARRICK GOLD CORP (BBB+)</option>
+<option value="ACS">ACS — ACS ACTIVIDADES CONS Y SERV (BBB-)</option>
+<option value="AD">AD — KONINKLIJKE AHOLD DELHAIZE N (BBB+)</option>
+<option value="ADI">ADI — ANALOG DEVICES INC (A-)</option>
+<option value="ADM">ADM — ARCHER-DANIELS-MIDLAND CO (A)</option>
+<option value="ADS">ADS — ADIDAS AG (A-)</option>
+<option value="AEE">AEE — AMEREN CORPORATION (BBB+)</option>
+<option value="AEP">AEP — AMERICAN ELECTRIC POWER (BBB+)</option>
+<option value="AES">AES — AES CORP (BBB-)</option>
+<option value="AGCO">AGCO — AGCO CORP (BBB-)</option>
+<option value="AI">AI — AIR LIQUIDE SA (A)</option>
+<option value="AIR">AIR — AIRBUS SE (A)</option>
+<option value="AKE">AKE — ARKEMA (BBB+)</option>
+<option value="AKRBP">AKRBP — AKER BP ASA (BBB)</option>
+<option value="AKZA">AKZA — AKZO NOBEL N.V. (BBB)</option>
+<option value="ALA">ALA — ALTAGAS LTD (BBB-)</option>
+<option value="ALB">ALB — ALBEMARLE CORP (BBB-)</option>
+<option value="ALC">ALC — ALCON INC (BBB+)</option>
+<option value="ALFA">ALFA — ALFA LAVAL AB (BBB+)</option>
+<option value="ALLE">ALLE — ALLEGION PLC (BBB)</option>
+<option value="ALTA">ALTA — ALTAREA (BBB-)</option>
+<option value="AMAT">AMAT — APPLIED MATERIALS INC (A)</option>
+<option value="AMCR">AMCR — AMCOR PLC (BBB)</option>
+<option value="AMD">AMD — ADVANCED MICRO DEVICES (A)</option>
+<option value="AME">AME — AMETEK INC (BBB+)</option>
+<option value="AMGN">AMGN — AMGEN INC (BBB+)</option>
+<option value="AMZN">AMZN — AMAZON.COM INC (AA)</option>
+<option value="AN">AN — AUTONATION INC (BBB-)</option>
+<option value="APA">APA — APA CORP (BBB-)</option>
+<option value="APD">APD — AIR PRODUCTS & CHEMICALS INC (A)</option>
+<option value="APH">APH — AMPHENOL CORP-CL A (A-)</option>
+<option value="APTV">APTV — APTIV PLC (BBB)</option>
+<option value="AREIT">AREIT — ALTAREIT (BBB-)</option>
+<option value="ARW">ARW — ARROW ELECTRONICS INC (BBB-)</option>
+<option value="AS">AS — AMER SPORTS INC (BBB-)</option>
+<option value="ASSAB">ASSAB — ASSA ABLOY AB-B (A-)</option>
+<option value="ATCOA">ATCOA — ATLAS COPCO AB-A SHS (A+)</option>
+<option value="ATD">ATD — ALIMENTATION COUCHE-TARD INC (BBB+)</option>
+<option value="ATR">ATR — APTARGROUP INC (BBB-)</option>
+<option value="AVGO">AVGO — BROADCOM INC (BBB+)</option>
+<option value="AVT">AVT — AVNET INC (BBB-)</option>
+<option value="AVY">AVY — AVERY DENNISON CORP (BBB)</option>
+<option value="AYI">AYI — ACUITY INC (BBB)</option>
+<option value="AYV">AYV — AYVENS SA (A-)</option>
+<option value="AZN">AZN — ASTRAZENECA PLC (A+)</option>
+<option value="AZO">AZO — AUTOZONE INC (BBB)</option>
+<option value="B4B">B4B — METRO AG (BBB-)</option>
+<option value="BA">BA — BOEING CO/THE (BBB-)</option>
+<option value="BA/">BA/ — BAE SYSTEMS PLC (BBB+)</option>
+<option value="BARN">BARN — BARRY CALLEBAUT AG-REG (BBB-)</option>
+<option value="BAS">BAS — BASF SE (A-)</option>
+<option value="BATS">BATS — BRITISH AMERICAN TOBACCO PLC (BBB+)</option>
+<option value="BAX">BAX — BAXTER INTERNATIONAL INC (BBB)</option>
+<option value="BAYN">BAYN — BAYER AG-REG (BBB)</option>
+<option value="BBY">BBY — BEST BUY CO INC (BBB+)</option>
+<option value="BC">BC — BRUNSWICK CORP (BBB-)</option>
+<option value="BCE">BCE — BCE INC (BBB)</option>
+<option value="BDX">BDX — BECTON DICKINSON AND CO (BBB)</option>
+<option value="BF/B">BF/B — BROWN-FORMAN CORP-CLASS B (A-)</option>
+<option value="BG">BG — BUNGE GLOBAL SA (BBB+)</option>
+<option value="BIIB">BIIB — BIOGEN INC (BBB+)</option>
+<option value="BIO">BIO — BIO-RAD LABORATORIES-A (BBB)</option>
+<option value="BKR">BKR — BAKER HUGHES CO (A)</option>
+<option value="BMW">BMW — BAYERISCHE MOTOREN WERKE AG (A)</option>
+<option value="BMY">BMY — BRISTOL-MYERS SQUIBB CO (A)</option>
+<option value="BN">BN — BROOKFIELD CORP (A-)</option>
+<option value="BN.FR">BN.FR — DANONE (BBB+)</option>
+<option value="BNR">BNR — BRENNTAG SE (BBB+)</option>
+<option value="BNZL">BNZL — BUNZL PLC (BBB+)</option>
+<option value="BOSS">BOSS — HUGO BOSS AG -ORD (BBB)</option>
+<option value="BP/">BP/ — BP PLC (A-)</option>
+<option value="BRK/A">BRK/A — BERKSHIRE HATHAWAY INC-CL A (AA)</option>
+<option value="BSX">BSX — BOSTON SCIENTIFIC CORP (A-)</option>
+<option value="BT/A">BT/A — BT GROUP PLC (BBB)</option>
+<option value="BWA">BWA — BORGWARNER INC (BBB)</option>
+<option value="BZU">BZU — BUZZI SPA (BBB)</option>
+<option value="CA">CA — CARREFOUR SA (BBB)</option>
+<option value="CAE">CAE — CAE INC (BBB-)</option>
+<option value="CAG">CAG — CONAGRA BRANDS INC (BBB-)</option>
+<option value="CAH">CAH — CARDINAL HEALTH INC (BBB)</option>
+<option value="CARR">CARR — CARRIER GLOBAL CORP (BBB+)</option>
+<option value="CAT">CAT — CATERPILLAR INC (A)</option>
+<option value="CBT">CBT — CABOT CORP (BBB)</option>
+<option value="CCH">CCH — COCA-COLA HBC AG-DI (BBB+)</option>
+<option value="CCL/B">CCL/B — CCL INDUSTRIES INC - CL B (BBB)</option>
+<option value="CCO">CCO — CAMECO CORP (BBB-)</option>
+<option value="CDNS">CDNS — CADENCE DESIGN SYS INC (BBB+)</option>
+<option value="CDW">CDW — CDW CORP/DE (BBB-)</option>
+<option value="CF">CF — CF INDUSTRIES HOLDINGS INC (BBB)</option>
+<option value="CFR">CFR — CIE FINANCIERE RICHEMO-A REG (A+)</option>
+<option value="CHD">CHD — CHURCH & DWIGHT CO INC (BBB+)</option>
+<option value="CI">CI — THE CIGNA GROUP (A-)</option>
+<option value="CL">CL — COLGATE-PALMOLIVE CO (A+)</option>
+<option value="CLN">CLN — CLARIANT AG-REG (BBB-)</option>
+<option value="CLX">CLX — CLOROX COMPANY (BBB+)</option>
+<option value="CMI">CMI — CUMMINS INC (A)</option>
+<option value="CMS">CMS — CMS ENERGY CORP (BBB+)</option>
+<option value="CNA">CNA — CENTRICA PLC (BBB)</option>
+<option value="CNH">CNH — CNH INDUSTRIAL NV (BBB+)</option>
+<option value="CNP">CNP — CENTERPOINT ENERGY INC (BBB+)</option>
+<option value="CNQ">CNQ — CANADIAN NATURAL RESOURCES (BBB-)</option>
+<option value="CNR">CNR — CANADIAN NATL RAILWAY CO (A-)</option>
+<option value="COKE">COKE — COCA-COLA CONSOLIDATED INC (BBB+)</option>
+<option value="COLOB">COLOB — COLOPLAST-B (BBB+)</option>
+<option value="CON">CON — CONTINENTAL AG (BBB)</option>
+<option value="COP">COP — CONOCOPHILLIPS (A-)</option>
+<option value="COR">COR — CENCORA INC (BBB+)</option>
+<option value="COST">COST — COSTCO WHOLESALE CORP (AA)</option>
+<option value="CP">CP — CANADIAN PACIFIC KANSAS CITY (BBB+)</option>
+<option value="CPB">CPB — THE CAMPBELL'S COMPANY (BBB-)</option>
+<option value="CPG">CPG — COMPASS GROUP PLC (A)</option>
+<option value="CRH">CRH — CRH PLC (BBB+)</option>
+<option value="CSCO">CSCO — CISCO SYSTEMS INC (AA-)</option>
+<option value="CSL">CSL — CARLISLE COS INC (BBB)</option>
+<option value="CSX">CSX — CSX CORP (BBB+)</option>
+<option value="CTAS">CTAS — CINTAS CORP (A-)</option>
+<option value="CTC/A">CTC/A — CANADIAN TIRE CORP-CLASS A (BBB)</option>
+<option value="CTEC">CTEC — CONVATEC GROUP PLC (BBB-)</option>
+<option value="CTVA">CTVA — CORTEVA INC (A-)</option>
+<option value="CVE">CVE — CENOVUS ENERGY INC (BBB)</option>
+<option value="CVS">CVS — CVS HEALTH CORP (BBB)</option>
+<option value="CVX">CVX — CHEVRON CORP (AA-)</option>
+<option value="D">D — DOMINION ENERGY INC (BBB+)</option>
+<option value="DAL">DAL — DELTA AIR LINES INC (BBB-)</option>
+<option value="DCC">DCC — DCC PLC (BBB)</option>
+<option value="DD">DD — DUPONT DE NEMOURS INC (BBB+)</option>
+<option value="DE">DE — DEERE & CO (A)</option>
+<option value="DELL">DELL — DELL TECHNOLOGIES -C (BBB)</option>
+<option value="DG">DG — DOLLAR GENERAL CORP (BBB)</option>
+<option value="DG.FR">DG.FR — VINCI SA (A-)</option>
+<option value="DGE">DGE — DIAGEO PLC (A-)</option>
+<option value="DHI">DHI — DR HORTON INC (BBB+)</option>
+<option value="DHR">DHR — DANAHER CORP (A-)</option>
+<option value="DINO">DINO — HF SINCLAIR CORP (BBB-)</option>
+<option value="DIS">DIS — WALT DISNEY CO/THE (A)</option>
+<option value="DKS">DKS — DICK'S SPORTING GOODS INC (BBB)</option>
+<option value="DLTR">DLTR — DOLLAR TREE INC (BBB)</option>
+<option value="DOL">DOL — DOLLARAMA INC (BBB)</option>
+<option value="DOV">DOV — DOVER CORP (BBB+)</option>
+<option value="DRI">DRI — DARDEN RESTAURANTS INC (BBB)</option>
+<option value="DSFIR">DSFIR — DSM-FIRMENICH AG (A-)</option>
+<option value="DSV">DSV — DSV A/S (A-)</option>
+<option value="DTE">DTE — DTE ENERGY COMPANY (BBB+)</option>
+<option value="DTE.DE">DTE.DE — DEUTSCHE TELEKOM AG-REG (BBB+)</option>
+<option value="DTG">DTG — DAIMLER TRUCK HOLDING AG (A-)</option>
+<option value="DUK">DUK — DUKE ENERGY CORP (BBB+)</option>
+<option value="DVN">DVN — DEVON ENERGY CORP (BBB)</option>
+<option value="EBK">EBK — ENBW ENERGIE BADEN-WUERTTEMB (A-)</option>
+<option value="ECL">ECL — ECOLAB INC (A-)</option>
+<option value="ED">ED — CONSOLIDATED EDISON INC (A-)</option>
+<option value="EDP">EDP — EDP SA (BBB)</option>
+<option value="EIX">EIX — EDISON INTERNATIONAL (BBB)</option>
+<option value="EKTAB">EKTAB — ELEKTA AB-B SHS (BBB-)</option>
+<option value="EL">EL — ESTEE LAUDER COMPANIES-CL A (A-)</option>
+<option value="EL.FR">EL.FR — ESSILORLUXOTTICA (A)</option>
+<option value="ELE">ELE — ENDESA SA (BBB)</option>
+<option value="ELUXB">ELUXB — ELECTROLUX AB-B (BBB)</option>
+<option value="EMA">EMA — EMERA INC (BBB)</option>
+<option value="EMN">EMN — EASTMAN CHEMICAL CO (BBB)</option>
+<option value="EMR">EMR — EMERSON ELECTRIC CO (A)</option>
+<option value="EN">EN — BOUYGUES SA (A-)</option>
+<option value="ENB">ENB — ENBRIDGE INC (BBB+)</option>
+<option value="ENEL">ENEL — ENEL SPA (BBB)</option>
+<option value="ENGI">ENGI — ENGIE (BBB+)</option>
+<option value="ENI">ENI — ENI SPA (A-)</option>
+<option value="ENR">ENR — SIEMENS ENERGY AG (BBB-)</option>
+<option value="EOAN">EOAN — E.ON SE (BBB+)</option>
+<option value="EOG">EOG — EOG RESOURCES INC (A-)</option>
+<option value="EPD">EPD — ENTERPRISE PRODUCTS PARTNERS (A-)</option>
+<option value="EPIA">EPIA — EPIROC AB-A (BBB+)</option>
+<option value="EQNR">EQNR — EQUINOR ASA (AA-)</option>
+<option value="ERICB">ERICB — ERICSSON LM-B SHS (BBB-)</option>
+<option value="ES">ES — EVERSOURCE ENERGY (BBB+)</option>
+<option value="ESSITYA">ESSITYA — ESSITY AKTIEBOLAG-A (BBB+)</option>
+<option value="ET">ET — ENERGY TRANSFER LP (BBB)</option>
+<option value="ETN">ETN — EATON CORP PLC (A-)</option>
+<option value="ETR">ETR — ENTERGY CORP (BBB+)</option>
+<option value="EVK">EVK — EVONIK INDUSTRIES AG (BBB+)</option>
+<option value="EVRG">EVRG — EVERGY INC (BBB+)</option>
+<option value="EW">EW — EDWARDS LIFESCIENCES CORP (BBB)</option>
+<option value="EXC">EXC — EXELON CORP (A-)</option>
+<option value="EXP">EXP — EAGLE MATERIALS INC (BBB)</option>
+<option value="F">F — FORD MOTOR CO (BBB-)</option>
+<option value="FBIN">FBIN — FORTUNE BRANDS INNOVATIONS I (BBB)</option>
+<option value="FCX">FCX — FREEPORT-MCMORAN INC (BBB-)</option>
+<option value="FDX">FDX — FEDEX CORP (BBB)</option>
+<option value="FE">FE — FIRSTENERGY CORP (BBB)</option>
+<option value="FER">FER — FERROVIAL SE (BBB)</option>
+<option value="FLEX">FLEX — FLEX LTD (BBB-)</option>
+<option value="FLO">FLO — FLOWERS FOODS INC (BBB)</option>
+<option value="FLS">FLS — FLOWSERVE CORP (BBB-)</option>
+<option value="FMC">FMC — FMC CORP (BBB-)</option>
+<option value="FME">FME — FRESENIUS MEDICAL CARE AG (BBB-)</option>
+<option value="FORTUM">FORTUM — FORTUM OYJ (BBB+)</option>
+<option value="FOXA">FOXA — FOX CORP - CLASS A (BBB)</option>
+<option value="FRE">FRE — FRESENIUS SE & CO KGAA (BBB)</option>
+<option value="FTI">FTI — TECHNIPFMC PLC (BBB-)</option>
+<option value="FTNT">FTNT — FORTINET INC (BBB+)</option>
+<option value="FTS">FTS — FORTIS INC (A-)</option>
+<option value="FTT">FTT — FINNING INTERNATIONAL INC (BBB+)</option>
+<option value="FTV">FTV — FORTIVE CORP (BBB)</option>
+<option value="GD">GD — GENERAL DYNAMICS CORP (A)</option>
+<option value="GE">GE — GENERAL ELECTRIC (A-)</option>
+<option value="GEBN">GEBN — GEBERIT AG-REG (A)</option>
+<option value="GEHC">GEHC — GE HEALTHCARE TECHNOLOGY (BBB)</option>
+<option value="GEV">GEV — GE VERNOVA INC (BBB-)</option>
+<option value="GIB/A">GIB/A — CGI INC (BBB+)</option>
+<option value="GILD">GILD — GILEAD SCIENCES INC (A-)</option>
+<option value="GIS">GIS — GENERAL MILLS INC (BBB)</option>
+<option value="GIVN">GIVN — GIVAUDAN-REG (A-)</option>
+<option value="GLEN">GLEN — GLENCORE PLC (BBB+)</option>
+<option value="GLW">GLW — CORNING INC (BBB+)</option>
+<option value="GM">GM — GENERAL MOTORS CO (BBB)</option>
+<option value="GPC">GPC — GENUINE PARTS CO (BBB)</option>
+<option value="GSK">GSK — GSK PLC (A)</option>
+<option value="GWW">GWW — WW GRAINGER INC (A+)</option>
+<option value="HAL">HAL — HALLIBURTON CO (BBB+)</option>
+<option value="HAS">HAS — HASBRO INC (BBB)</option>
+<option value="HBR">HBR — HARBOUR ENERGY PLC (BBB-)</option>
+<option value="HCA">HCA — HCA HEALTHCARE INC (BBB-)</option>
+<option value="HD">HD — HOME DEPOT INC (A)</option>
+<option value="HEI">HEI — HEIDELBERG MATERIALS AG (BBB)</option>
+<option value="HEIA">HEIA — HEINEKEN NV (BBB+)</option>
+<option value="HEN3">HEN3 — HENKEL AG & CO KGAA VOR-PREF (A)</option>
+<option value="HES">HES — HESS CORP (BBB-)</option>
+<option value="HIK">HIK — HIKMA PHARMACEUTICALS PLC (BBB-)</option>
+<option value="HLN">HLN — HALEON PLC (BBB+)</option>
+<option value="HLUNB">HLUNB — H LUNDBECK A/S (BBB-)</option>
+<option value="HMB">HMB — HENNES & MAURITZ AB-B SHS (BBB)</option>
+<option value="HO">HO — THALES SA (A-)</option>
+<option value="HOG">HOG — HARLEY-DAVIDSON INC (BBB-)</option>
+<option value="HOLMB">HOLMB — HOLMEN AB-B SHARES (BBB+)</option>
+<option value="HOLN">HOLN — HOLCIM LTD (BBB+)</option>
+<option value="HOLX">HOLX — HOLOGIC INC (BBB-)</option>
+<option value="HON">HON — HONEYWELL INTERNATIONAL INC (A)</option>
+<option value="HOT">HOT — HOCHTIEF AG (BBB-)</option>
+<option value="HPE">HPE — HEWLETT PACKARD ENTERPRISE (BBB)</option>
+<option value="HPQ">HPQ — HP INC (BBB)</option>
+<option value="HRL">HRL — HORMEL FOODS CORP (A-)</option>
+<option value="HSY">HSY — HERSHEY CO/THE (A)</option>
+<option value="HUBB">HUBB — HUBBELL INC (BBB+)</option>
+<option value="HUN">HUN — HUNTSMAN CORP (BBB-)</option>
+<option value="HUSQB">HUSQB — HUSQVARNA AB-B SHS (BBB-)</option>
+<option value="HWM">HWM — HOWMET AEROSPACE INC (BBB)</option>
+<option value="IAG">IAG — INTL CONSOLIDATED AIRLINE-DI (BBB)</option>
+<option value="IBE">IBE — IBERDROLA SA (BBB+)</option>
+<option value="IBM">IBM — INTL BUSINESS MACHINES CORP (A-)</option>
+<option value="IEX">IEX — IDEX CORP (BBB)</option>
+<option value="IFF">IFF — INTL FLAVORS & FRAGRANCES (BBB-)</option>
+<option value="IFX">IFX — INFINEON TECHNOLOGIES AG (BBB+)</option>
+<option value="ILMN">ILMN — ILLUMINA INC (BBB)</option>
+<option value="IMB">IMB — IMPERIAL BRANDS PLC (BBB)</option>
+<option value="IMO">IMO — IMPERIAL OIL LTD (AA-)</option>
+<option value="INDT">INDT — INDUTRADE AB (BBB-)</option>
+<option value="INFVP">INFVP — INFRABEL SA (AA)</option>
+<option value="INGR">INGR — INGREDION INC (BBB)</option>
+<option value="INTC">INTC — INTEL CORP (BBB)</option>
+<option value="IP">IP — INTERNATIONAL PAPER CO (BBB)</option>
+<option value="IPN">IPN — IPSEN (BBB-)</option>
+<option value="IR">IR — INGERSOLL-RAND INC (BBB)</option>
+<option value="ISS">ISS — ISS A/S (BBB)</option>
+<option value="ITT">ITT — ITT INC (BBB)</option>
+<option value="ITV">ITV — ITV PLC (BBB-)</option>
+<option value="ITW">ITW — ILLINOIS TOOL WORKS (A+)</option>
+<option value="JBL">JBL — JABIL INC (BBB-)</option>
+<option value="JCI">JCI — JOHNSON CONTROLS INTERNATION (BBB+)</option>
+<option value="JDEP">JDEP — JDE PEET'S NV (BBB-)</option>
+<option value="JNJ">JNJ — JOHNSON & JOHNSON (AAA)</option>
+<option value="JNPR">JNPR — JUNIPER NETWORKS INC (BBB)</option>
+<option value="K">K — KINROSS GOLD CORP (BBB-)</option>
+<option value="KBX">KBX — KNORR-BREMSE AG (A-)</option>
+<option value="KDP">KDP — KEURIG DR PEPPER INC (BBB)</option>
+<option value="KER">KER — KERING (BBB+)</option>
+<option value="KEX">KEX — KIRBY CORP (BBB)</option>
+<option value="KEY">KEY — KEYERA CORP (BBB)</option>
+<option value="KEYS">KEYS — KEYSIGHT TECHNOLOGIES IN (BBB)</option>
+<option value="KGF">KGF — KINGFISHER PLC (BBB)</option>
+<option value="KGX">KGX — KION GROUP AG (BBB-)</option>
+<option value="KHC">KHC — KRAFT HEINZ CO/THE (BBB)</option>
+<option value="KLAC">KLAC — KLA CORP (A-)</option>
+<option value="KMB">KMB — KIMBERLY-CLARK CORP (A)</option>
+<option value="KMI">KMI — KINDER MORGAN INC (BBB)</option>
+<option value="KMT">KMT — KENNAMETAL INC (BBB)</option>
+<option value="KO">KO — COCA-COLA CO/THE (A+)</option>
+<option value="KR">KR — KROGER CO (BBB)</option>
+<option value="KSP">KSP — KINGSPAN GROUP PLC (BBB)</option>
+<option value="KVUE">KVUE — KENVUE INC (A)</option>
+<option value="KYGA">KYGA — KERRY GROUP PLC-A (BBB+)</option>
+<option value="L">L — LOBLAW COMPANIES LTD (BBB+)</option>
+<option value="LDO">LDO — LEONARDO SPA (BBB-)</option>
+<option value="LDOS">LDOS — LEIDOS HOLDINGS INC (BBB)</option>
+<option value="LEA">LEA — LEAR CORP (BBB)</option>
+<option value="LEG">LEG — LEGGETT & PLATT INC (BBB-)</option>
+<option value="LEN">LEN — LENNAR CORP-A (BBB)</option>
+<option value="LH">LH — LABCORP HOLDINGS INC (BBB)</option>
+<option value="LHA">LHA — DEUTSCHE LUFTHANSA-REG (BBB-)</option>
+<option value="LHX">LHX — L3HARRIS TECHNOLOGIES INC (BBB)</option>
+<option value="LIGHT">LIGHT — SIGNIFY NV (BBB-)</option>
+<option value="LII">LII — LENNOX INTERNATIONAL INC (BBB)</option>
+<option value="LIN">LIN — LINDE PLC (A)</option>
+<option value="LKQ">LKQ — LKQ CORP (BBB-)</option>
+<option value="LLY">LLY — ELI LILLY & CO (A+)</option>
+<option value="LMT">LMT — LOCKHEED MARTIN CORP (A-)</option>
+<option value="LNG">LNG — CHENIERE ENERGY INC (BBB)</option>
+<option value="LNT">LNT — ALLIANT ENERGY CORP (BBB+)</option>
+<option value="LONN">LONN — LONZA GROUP AG-REG (BBB+)</option>
+<option value="LOOMIS">LOOMIS — LOOMIS AB (BBB)</option>
+<option value="LOW">LOW — LOWE'S COS INC (BBB+)</option>
+<option value="LR">LR — LEGRAND SA (A-)</option>
+<option value="LRCX">LRCX — LAM RESEARCH CORP (A-)</option>
+<option value="LUNDB">LUNDB — LUNDBERGS AB-B SHS (A+)</option>
+<option value="LUV">LUV — SOUTHWEST AIRLINES CO (BBB)</option>
+<option value="LYB">LYB — LYONDELLBASELL INDU-CL A (BBB)</option>
+<option value="MAERSKB">MAERSKB — AP MOLLER-MAERSK A/S-B (BBB+)</option>
+<option value="MAS">MAS — MASCO CORP (BBB)</option>
+<option value="MAT">MAT — MATTEL INC (BBB)</option>
+<option value="MBG">MBG — MERCEDES-BENZ GROUP AG (A)</option>
+<option value="MC">MC — LVMH MOET HENNESSY LOUIS VUI (AA-)</option>
+<option value="MCK">MCK — MCKESSON CORP (BBB+)</option>
+<option value="MDLZ">MDLZ — MONDELEZ INTERNATIONAL INC-A (BBB)</option>
+<option value="MDT">MDT — MEDTRONIC PLC (A)</option>
+<option value="METSB">METSB — METSA BOARD OYJ-B (BBB-)</option>
+<option value="METSO">METSO — METSO CORP (BBB)</option>
+<option value="MG">MG — MAGNA INTERNATIONAL INC (A-)</option>
+<option value="MHK">MHK — MOHAWK INDUSTRIES INC (BBB+)</option>
+<option value="MKC">MKC — MCCORMICK & CO-NON VTG SHRS (BBB)</option>
+<option value="ML">ML — MICHELIN (CGDE) (A)</option>
+<option value="MLM">MLM — MARTIN MARIETTA MATERIALS (BBB+)</option>
+<option value="MMM">MMM — 3M CO (BBB+)</option>
+<option value="MNDI">MNDI — MONDI PLC (A-)</option>
+<option value="MO">MO — ALTRIA GROUP INC (BBB)</option>
+<option value="MOS">MOS — MOSAIC CO/THE (BBB)</option>
+<option value="MPC">MPC — MARATHON PETROLEUM CORP (BBB)</option>
+<option value="MRK">MRK — MERCK & CO. INC. (A+)</option>
+<option value="MRK.DE">MRK.DE — MERCK KGAA (A)</option>
+<option value="MRU">MRU — METRO INC/CN (BBB)</option>
+<option value="MRVL">MRVL — MARVELL TECHNOLOGY INC (BBB-)</option>
+<option value="MSFT">MSFT — MICROSOFT CORP (AAA)</option>
+<option value="MSI">MSI — MOTOROLA SOLUTIONS INC (BBB)</option>
+<option value="MT">MT — ARCELORMITTAL (BBB-)</option>
+<option value="MTH">MTH — MERITAGE HOMES CORP (BBB-)</option>
+<option value="MU">MU — MICRON TECHNOLOGY INC (BBB-)</option>
+<option value="NDSN">NDSN — NORDSON CORP (BBB)</option>
+<option value="NEE">NEE — NEXTERA ENERGY INC (A-)</option>
+<option value="NEM">NEM — NEWMONT CORP (BBB+)</option>
+<option value="NESN">NESN — NESTLE SA-REG (AA-)</option>
+<option value="NEU">NEU — NEWMARKET CORP (BBB+)</option>
+<option value="NG/">NG/ — NATIONAL GRID PLC (BBB+)</option>
+<option value="NHY">NHY — NORSK HYDRO ASA (BBB)</option>
+<option value="NI">NI — NISOURCE INC (BBB+)</option>
+<option value="NK">NK — IMERYS SA (BBB-)</option>
+<option value="NKE">NKE — NIKE INC -CL B (AA-)</option>
+<option value="NOC">NOC — NORTHROP GRUMMAN CORP (BBB+)</option>
+<option value="NOKIA">NOKIA — NOKIA OYJ (BBB-)</option>
+<option value="NOV">NOV — NOV INC (BBB)</option>
+<option value="NOVN">NOVN — NOVARTIS AG-REG (AA-)</option>
+<option value="NOVOB">NOVOB — NOVO NORDISK A/S-B (AA-)</option>
+<option value="NSC">NSC — NORFOLK SOUTHERN CORP (BBB+)</option>
+<option value="NTAP">NTAP — NETAPP INC (BBB+)</option>
+<option value="NTGY">NTGY — NATURGY ENERGY GROUP SA (BBB)</option>
+<option value="NTR">NTR — NUTRIEN LTD (BBB)</option>
+<option value="NUE">NUE — NUCOR CORP (A-)</option>
+<option value="NVDA">NVDA — NVIDIA CORP (AA-)</option>
+<option value="NVR">NVR — NVR INC (BBB+)</option>
+<option value="NVT">NVT — NVENT ELECTRIC PLC (BBB-)</option>
+<option value="NWSA">NWSA — NEWS CORP - CLASS A (BBB-)</option>
+<option value="NXPI">NXPI — NXP SEMICONDUCTORS NV (BBB+)</option>
+<option value="NXT">NXT — NEXT PLC (BBB)</option>
+<option value="OC">OC — OWENS CORNING (BBB)</option>
+<option value="OGE">OGE — OGE ENERGY CORP (BBB+)</option>
+<option value="OGS">OGS — ONE GAS INC (A-)</option>
+<option value="OKE">OKE — ONEOK INC (BBB)</option>
+<option value="OMC">OMC — OMNICOM GROUP (BBB+)</option>
+<option value="OR">OR — L'OREAL (AA)</option>
+<option value="ORA">ORA — ORANGE (BBB+)</option>
+<option value="ORLY">ORLY — O'REILLY AUTOMOTIVE INC (BBB)</option>
+<option value="ORSTED">ORSTED — ORSTED A/S (BBB)</option>
+<option value="OSK">OSK — OSHKOSH CORP (BBB)</option>
+<option value="OTIS">OTIS — OTIS WORLDWIDE CORP (BBB)</option>
+<option value="PAA">PAA — PLAINS ALL AMER PIPELINE LP (BBB)</option>
+<option value="PAAS">PAAS — PAN AMERICAN SILVER CORP (BBB-)</option>
+<option value="PCAR">PCAR — PACCAR INC (A+)</option>
+<option value="PEG">PEG — PUBLIC SERVICE ENTERPRISE GP (BBB+)</option>
+<option value="PEP">PEP — PEPSICO INC (A+)</option>
+<option value="PFE">PFE — PFIZER INC (A)</option>
+<option value="PG">PG — PROCTER & GAMBLE CO/THE (AA-)</option>
+<option value="PH">PH — PARKER HANNIFIN CORP (BBB+)</option>
+<option value="PHIA">PHIA — KONINKLIJKE PHILIPS NV (BBB+)</option>
+<option value="PHM">PHM — PULTEGROUP INC (BBB)</option>
+<option value="PII">PII — POLARIS INC (BBB)</option>
+<option value="PIRC">PIRC — PIRELLI & C SPA (BBB-)</option>
+<option value="PKG">PKG — PACKAGING CORP OF AMERICA (BBB)</option>
+<option value="PM">PM — PHILIP MORRIS INTERNATIONAL (A-)</option>
+<option value="PNDORA">PNDORA — PANDORA A/S (BBB)</option>
+<option value="PNR">PNR — PENTAIR PLC (BBB-)</option>
+<option value="PNW">PNW — PINNACLE WEST CAPITAL (BBB+)</option>
+<option value="PPC">PPC — PILGRIM'S PRIDE CORP (BBB-)</option>
+<option value="PPG">PPG — PPG INDUSTRIES INC (BBB+)</option>
+<option value="PPL">PPL — PEMBINA PIPELINE CORP (BBB)</option>
+<option value="PPL">PPL — PPL CORP (A-)</option>
+<option value="PRX">PRX — PROSUS NV (BBB)</option>
+<option value="PRY">PRY — PRYSMIAN SPA (BBB-)</option>
+<option value="PSX">PSX — PHILLIPS 66 (BBB+)</option>
+<option value="PUB">PUB — PUBLICIS GROUPE (BBB+)</option>
+<option value="PVH">PVH — PVH CORP (BBB-)</option>
+<option value="PWR">PWR — QUANTA SERVICES INC (BBB)</option>
+<option value="QCOM">QCOM — QUALCOMM INC (A)</option>
+<option value="QRVO">QRVO — QORVO INC (BBB-)</option>
+<option value="RCI/B">RCI/B — ROGERS COMMUNICATIONS INC-B (BBB-)</option>
+<option value="RCL">RCL — ROYAL CARIBBEAN CRUISES LTD (BBB-)</option>
+<option value="REGN">REGN — REGENERON PHARMACEUTICALS (BBB+)</option>
+<option value="REL">REL — RELX PLC (A-)</option>
+<option value="REP">REP — REPSOL SA (BBB+)</option>
+<option value="RI">RI — PERNOD RICARD SA (BBB+)</option>
+<option value="RIO">RIO — RIO TINTO PLC (A)</option>
+<option value="RKT">RKT — RECKITT BENCKISER GROUP PLC (A-)</option>
+<option value="RL">RL — RALPH LAUREN CORP (A-)</option>
+<option value="ROG">ROG — ROCHE HOLDING AG-GENUSSCHEIN (AA)</option>
+<option value="ROK">ROK — ROCKWELL AUTOMATION INC (A-)</option>
+<option value="ROST">ROST — ROSS STORES INC (BBB+)</option>
+<option value="RPM">RPM — RPM INTERNATIONAL INC (BBB)</option>
+<option value="RS">RS — RELIANCE INC (BBB+)</option>
+<option value="RTX">RTX — RTX CORP (BBB+)</option>
+<option value="RVTY">RVTY — REVVITY INC (BBB)</option>
+<option value="SAABB">SAABB — SAAB AB-B (BBB+)</option>
+<option value="SAF">SAF — SAFRAN SA (A-)</option>
+<option value="SAN">SAN — SANOFI (AA)</option>
+<option value="SAND">SAND — SANDVIK AB (BBB+)</option>
+<option value="SBRY">SBRY — SAINSBURY (J) PLC (BBB)</option>
+<option value="SBUX">SBUX — STARBUCKS CORP (BBB+)</option>
+<option value="SCAB">SCAB — SVENSKA CELLULOSA AB SCA-B (BBB)</option>
+<option value="SCCO">SCCO — SOUTHERN COPPER CORP (BBB+)</option>
+<option value="SCMN">SCMN — SWISSCOM AG-REG (A-)</option>
+<option value="SCRVP">SCRVP — SCR-SIBELCO NV - AUC (BBB-)</option>
+<option value="SDF">SDF — K+S AG-REG (BBB-)</option>
+<option value="SDZ">SDZ — SANDOZ GROUP AG (BBB)</option>
+<option value="SECUB">SECUB — SECURITAS AB-B SHS (BBB)</option>
+<option value="SGO">SGO — COMPAGNIE DE SAINT GOBAIN (BBB+)</option>
+<option value="SHEL">SHEL — SHELL PLC (A+)</option>
+<option value="SHW">SHW — SHERWIN-WILLIAMS CO/THE (BBB)</option>
+<option value="SIE">SIE — SIEMENS AG-REG (AA-)</option>
+<option value="SIGN">SIGN — SIG GROUP AG (BBB-)</option>
+<option value="SIKA">SIKA — SIKA AG-REG (A-)</option>
+<option value="SJM">SJM — JM SMUCKER CO/THE (BBB)</option>
+<option value="SLB">SLB — SCHLUMBERGER LTD (A)</option>
+<option value="SMIN">SMIN — SMITHS GROUP PLC (BBB+)</option>
+<option value="SN/">SN/ — SMITH & NEPHEW PLC (BBB+)</option>
+<option value="SNA">SNA — SNAP-ON INC (A-)</option>
+<option value="SNCVP">SNCVP — SNCB - AUC (A)</option>
+<option value="SNPS">SNPS — SYNOPSYS INC (BBB)</option>
+<option value="SNX">SNX — TD SYNNEX CORP (BBB-)</option>
+<option value="SO">SO — SOUTHERN CO/THE (A-)</option>
+<option value="SOLB">SOLB — SOLVAY SA (BBB-)</option>
+<option value="SOLV">SOLV — SOLVENTUM CORP (BBB-)</option>
+<option value="SON">SON — SONOCO PRODUCTS CO (BBB-)</option>
+<option value="SRE">SRE — SEMPRA (BBB+)</option>
+<option value="SRG">SRG — SNAM SPA (A-)</option>
+<option value="SRT">SRT — SARTORIUS AG (BBB-)</option>
+<option value="SSABA">SSABA — SSAB AB-A SHARES (BBB-)</option>
+<option value="SSE">SSE — SSE PLC (BBB+)</option>
+<option value="STE">STE — STERIS PLC (BBB)</option>
+<option value="STLA">STLA — STELLANTIS NV (BBB)</option>
+<option value="STLD">STLD — STEEL DYNAMICS INC (BBB)</option>
+<option value="STMPA">STMPA — STMICROELECTRONICS NV (BBB+)</option>
+<option value="STR">STR — STRABAG SE-BR (BBB+)</option>
+<option value="STZ">STZ — CONSTELLATION BRANDS INC-A (BBB)</option>
+<option value="SU">SU — SCHNEIDER ELECTRIC SE (A)</option>
+<option value="SW">SW — SMURFIT WESTROCK PLC (BBB)</option>
+<option value="SW">SW — SODEXO SA (BBB+)</option>
+<option value="SWK">SWK — STANLEY BLACK & DECKER INC (A-)</option>
+<option value="SWKS">SWKS — SKYWORKS SOLUTIONS INC (BBB-)</option>
+<option value="SYENS">SYENS — SYENSQO SA (BBB+)</option>
+<option value="SYK">SYK — STRYKER CORP (BBB+)</option>
+<option value="SYY">SYY — SYSCO CORP (BBB)</option>
+<option value="SZU">SZU — SUEDZUCKER AG (BBB)</option>
+<option value="T">T — TELUS CORP (BBB-)</option>
+<option value="T">T — AT&T INC (BBB)</option>
+<option value="TAP">TAP — MOLSON COORS BEVERAGE CO - B (BBB)</option>
+<option value="TATE">TATE — TATE & LYLE PLC (BBB)</option>
+<option value="TCL/A">TCL/A — TRANSCONTINENTAL INC-CL A (BBB-)</option>
+<option value="TDY">TDY — TELEDYNE TECHNOLOGIES INC (BBB)</option>
+<option value="TECK/B">TECK/B — TECK RESOURCES LTD-CLS B (BBB-)</option>
+<option value="TEF">TEF — TELEFONICA SA (BBB-)</option>
+<option value="TEL">TEL — TELENOR ASA (A-)</option>
+<option value="TEL">TEL — TE CONNECTIVITY PLC (A-)</option>
+<option value="TEL2B">TEL2B — TELE2 AB-B SHS (BBB)</option>
+<option value="TELIA">TELIA — TELIA CO AB (BBB+)</option>
+<option value="TGT">TGT — TARGET CORP (A)</option>
+<option value="TJX">TJX — TJX COMPANIES INC (A)</option>
+<option value="TKR">TKR — TIMKEN CO (BBB-)</option>
+<option value="TMO">TMO — THERMO FISHER SCIENTIFIC INC (A-)</option>
+<option value="TMUS">TMUS — T-MOBILE US INC (BBB)</option>
+<option value="TOL">TOL — TOLL BROTHERS INC (BBB-)</option>
+<option value="TPR">TPR — TAPESTRY INC (BBB)</option>
+<option value="TRGP">TRGP — TARGA RESOURCES CORP (BBB)</option>
+<option value="TRP">TRP — TC ENERGY CORP (BBB+)</option>
+<option value="TSCO">TSCO — TRACTOR SUPPLY COMPANY (BBB)</option>
+<option value="TSCO.GB">TSCO.GB — TESCO PLC (BBB-)</option>
+<option value="TSLA">TSLA — TESLA INC (BBB)</option>
+<option value="TSN">TSN — TYSON FOODS INC-CL A (BBB)</option>
+<option value="TT">TT — TRANE TECHNOLOGIES PLC (BBB+)</option>
+<option value="TTC">TTC — TORO CO (BBB)</option>
+<option value="TTE">TTE — TOTALENERGIES SE (A+)</option>
+<option value="TXN">TXN — TEXAS INSTRUMENTS INC (A+)</option>
+<option value="TXT">TXT — TEXTRON INC (BBB)</option>
+<option value="ULVR">ULVR — UNILEVER PLC (A+)</option>
+<option value="UMG">UMG — UNIVERSAL MUSIC GROUP NV (BBB+)</option>
+<option value="UN0">UN0 — UNIPER SE (BBB-)</option>
+<option value="UNP">UNP — UNION PACIFIC CORP (A-)</option>
+<option value="UPM">UPM — UPM-KYMMENE OYJ (BBB+)</option>
+<option value="UVV">UVV — UNIVERSAL CORP/VA (BBB-)</option>
+<option value="VAR">VAR — VAR ENERGI ASA (BBB)</option>
+<option value="VIE">VIE — VEOLIA ENVIRONNEMENT (BBB)</option>
+<option value="VLO">VLO — VALERO ENERGY CORP (BBB)</option>
+<option value="VLTO">VLTO — VERALTO CORP (BBB)</option>
+<option value="VMC">VMC — VULCAN MATERIALS CO (BBB+)</option>
+<option value="VMI">VMI — VALMONT INDUSTRIES (BBB+)</option>
+<option value="VNT">VNT — VONTIER CORP (BBB-)</option>
+<option value="VOD">VOD — VODAFONE GROUP PLC (BBB)</option>
+<option value="VOLVB">VOLVB — VOLVO AB-B SHS (A)</option>
+<option value="VOW">VOW — VOLKSWAGEN AG (BBB+)</option>
+<option value="VRLA">VRLA — VERALLIA (BBB-)</option>
+<option value="VZ">VZ — VERIZON COMMUNICATIONS INC (BBB+)</option>
+<option value="WAB">WAB — WABTEC CORP (BBB)</option>
+<option value="WEC">WEC — WEC ENERGY GROUP INC (A-)</option>
+<option value="WEIR">WEIR — WEIR GROUP PLC/THE (BBB-)</option>
+<option value="WFG">WFG — WEST FRASER TIMBER CO LTD (BBB-)</option>
+<option value="WHR">WHR — WHIRLPOOL CORP (BBB-)</option>
+<option value="WLK">WLK — WESTLAKE CORP (BBB+)</option>
+<option value="WMB">WMB — WILLIAMS COS INC (BBB+)</option>
+<option value="WMT">WMT — WALMART INC (AA)</option>
+<option value="WN">WN — WESTON (GEORGE) LTD (BBB+)</option>
+<option value="WY">WY — WEYERHAEUSER CO (BBB)</option>
+<option value="XEL">XEL — XCEL ENERGY INC (BBB+)</option>
+<option value="XOM">XOM — EXXON MOBIL CORP (AA-)</option>
+<option value="XRAY">XRAY — DENTSPLY SIRONA INC (BBB-)</option>
+<option value="XYL">XYL — XYLEM INC (BBB)</option>
+<option value="YAR">YAR — YARA INTERNATIONAL ASA (BBB)</option>
+<option value="ZBH">ZBH — ZIMMER BIOMET HOLDINGS INC (BBB)</option>
+<option value="ZTS">ZTS — ZOETIS INC (BBB)</option>
+        </select>
+      </div>
+    </div>
+    <div class="ticker-match-badge" id="ticker-match-badge">✓ <span id="ticker-match-text">Company loaded</span></div>
+
+    <div class="ticker-or-divider">or enter manually</div>
+
+    <div class="inputs-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+      <div class="inp-group">
+        <div class="inp-label">Company name</div>
+        <div class="inp-row"><div class="inp-pre">🏢</div><input class="inp-field" id="in-company" placeholder="Acme Corp" type="text"></div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-label">Total Inventory on hand (millions)</div>
+        <div class="inp-row"><div class="inp-pre">$</div><input class="inp-field" id="in-inv" placeholder="1200" type="number" min="0"><div class="inp-suf">M</div></div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-label">Current Cash Conversion Cycle</div>
+        <div class="inp-row"><div class="inp-pre">⏱</div><input class="inp-field" id="in-ccc" placeholder="75" type="number" min="0"><div class="inp-suf">days</div></div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-label">Cost of capital / WACC</div>
+        <div class="inp-row"><div class="inp-pre">%</div><input class="inp-field" id="in-wacc" placeholder="8" type="number" min="0" max="30"></div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-label">Credit rating</div>
+        <div class="inp-row"><div class="inp-pre">★</div>
+          <select class="inp-select" id="in-rating">
+            <option value="">Select…</option>
+            <option value="AAA">AAA</option><option value="AA">AA</option>
+            <option value="A">A</option><option value="BBB">BBB</option>
+            <option value="BB">BB</option><option value="B">B</option>
+          </select>
+        </div>
+      </div>
+      <div class="inp-group" style="align-self:flex-end">
+        <label id="optin-label" onclick="clearOptinError()" style="display:flex;align-items:flex-start;gap:11px;background:var(--navy3);border:1px solid var(--w15);border-radius:var(--r8);padding:12px 14px;cursor:pointer;transition:border-color .2s,box-shadow .2s;">
+          <input type="checkbox" id="in-optin" style="margin-top:2px;accent-color:var(--yellow);width:15px;height:15px;flex-shrink:0;cursor:pointer;">
+          <span style="font-size:11px;color:var(--w60);line-height:1.55;">
+            I agree to be contacted by the 1TCC team with a personalised Capital Impact analysis and information about 1TCC's services.
+            <span style="display:block;margin-top:3px;font-size:10px;color:var(--w30);">You can withdraw consent at any time. Data processed per our Privacy Policy.</span>
+            <span id="optin-error" style="display:none;margin-top:4px;font-size:10px;color:var(--red);font-weight:500;">⚠ Please confirm your consent to continue.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button class="btn btn-secondary" onclick="goTo('s-mode')">← Back</button>
+      <button class="btn btn-primary" onclick="startFromTicker()">Start the game →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S-GAME -->
+<div class="screen" id="s-game">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="logo-box" style="width:30px;height:30px;font-size:15px;">1</div>
+      <div id="game-co-logo"></div>
+      <div class="pdots" id="pdots"></div>
+    </div>
+    <div class="score-box">
+      <span class="score-lbl">Score</span>
+      <span class="score-n" id="score-n">0</span>
+      <span class="score-lbl">/ 5</span>
+      <span id="q-timer-txt">30s</span>
+    </div>
+  </div>
+  <div class="tbar"><div class="tbar-f" id="tbar-f" style="width:100%"></div></div>
+  <div class="game-body">
+    <div class="game-left">
+      <div class="qcard">
+        <div class="q-ctx" id="q-ctx"></div>
+        <div class="q-txt" id="q-txt"></div>
+      </div>
+      <div class="opts" id="opts"></div>
+      <div class="fb" id="fb"><div class="fb-ic" id="fb-ic"></div><div class="fb-tx" id="fb-tx"></div></div>
+      <button class="btn btn-primary" id="btn-next" style="display:none;align-self:flex-end;font-size:14px;padding:12px 28px" onclick="nextQ()">Next →</button>
+    </div>
+    <div class="game-right">
+      <div class="chart-wrap">
+        <div class="chart-label">FCF impact building up</div>
+        <div class="chart-headline" id="chart-headline">$0M freed so far</div>
+        <canvas id="fcf-chart" height="130" style="max-height:130px"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S-RESULTS -->
+<div class="screen" id="s-results">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <div id="results-co-logo"></div>
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.14em;color:var(--yellow);text-transform:uppercase;">CII IMPACT ANALYSIS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;" id="results-co-name">—</div>
+    </div>
+  </div>
+  <div class="r-metrics">
+    <div class="r-card green-top">
+      <div class="r-card-lbl">FCF Impact</div>
+      <div class="r-card-val"><span class="pos" id="rf-fcf">—</span></div>
+      <div class="r-card-sub" id="rf-fcf-sub">—</div>
+    </div>
+    <div class="r-card">
+      <div class="r-card-lbl">Market Cap Upside</div>
+      <div class="r-card-val" id="rf-mcap">—</div>
+      <div class="r-card-sub" id="rf-mcap-sub">—</div>
+      <div id="rf-milestone"></div>
+      <div class="r-card-disc">*Assumes current P/FCF multiple holds. Conditions apply.</div>
+    </div>
+  </div>
+  <div style="background:var(--navy2);border:1px solid rgba(245,166,35,.25);border-left:3px solid var(--yellow);border-radius:0 var(--r8) var(--r8) 0;padding:14px 18px;width:100%;font-size:13px;color:var(--w60);line-height:1.6;" id="r-insight">—</div>
+  <div class="results-actions" style="display:flex;gap:12px;justify-content:center;width:100%">
+    <button class="btn btn-secondary" onclick="goTo('s0')">↺ &nbsp;Play again</button>
+    <a href="https://forms.office.com/Pages/ResponsePage.aspx?id=TOKBQ-eajEOs7m18c-qFkFG3PK_2t-xGhy6hQldlX0hUNjhBVThDNUZTM0VXSFJDQ0YzOVVQWlpQNC4u" target="_blank" class="btn btn-primary">📩 &nbsp;Get Full Report →</a>
+  </div>
+</div>
+
+<!-- S-EMAIL -->
+<div class="screen" id="s-email">
+  <div class="email-wrap">
+    <div style="font-size:28px">📊</div>
+    <div class="email-title">Get your full report</div>
+    <div class="email-sub">We'll send you a personalised Capital Impact analysis — your working capital opportunity, CCC improvement, and ROIC uplift. The 1TCC team will follow up within 48 hours.</div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+      <div class="inp-group">
+        <div class="inp-label">Your name</div>
+        <div class="email-inp-row"><input class="email-inp" id="em-name" placeholder="Jane Smith" type="text"></div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-label">Work email</div>
+        <div class="email-inp-row"><input class="email-inp" id="em-email" placeholder="jane@company.com" type="email"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="submitEmail()">Send report →</button>
+    <div style="font-size:10px;color:var(--w30);line-height:1.5;text-align:center;">By submitting you agree to be contacted by the 1TCC team. Data processed per our Privacy Policy.</div>
+    <button class="btn btn-secondary" onclick="goTo('s-results')" style="width:100%">← Back</button>
+  </div>
+</div>
+
+<!-- S-CONFIRM -->
+<div class="screen" id="s-confirm">
+  <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;max-width:420px">
+    <div style="font-size:52px">✅</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;">Done!</div>
+    <div style="font-size:15px;color:var(--w60);line-height:1.6;">We'll send you your full report and a member of the 1TCC team will follow up within 48 hours.</div>
+    <div style="background:var(--navy2);border:1px solid var(--w15);border-radius:var(--r8);padding:14px 18px;width:100%;text-align:left">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.12em;color:var(--w30);text-transform:uppercase;margin-bottom:7px">Confirmed</div>
+      <div id="conf-summary" style="font-size:13px;color:var(--w60);line-height:1.7;"></div>
+    </div>
+    <button class="btn btn-primary" onclick="goTo('s0')" style="width:100%">↺ Play again</button>
+  </div>
+</div>
+
+<!-- S-LEADS -->
+<div class="screen" id="s-leads">
+  <div style="width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.14em;color:var(--yellow);text-transform:uppercase">INTERNAL · TCC USE ONLY</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;">Lead capture</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" onclick="clearLeads()" style="font-size:11px;padding:8px 14px">Clear</button>
+      <button class="btn btn-primary" onclick="exportLeads()" style="font-size:12px;padding:9px 18px">Export CSV</button>
+      <button class="btn btn-secondary" onclick="goTo('s0')" style="font-size:11px;padding:8px 14px">← Back</button>
+    </div>
+  </div>
+  <div id="lead-count" style="font-size:12px;color:var(--w60);margin-bottom:10px;"></div>
+  <div class="lead-table-wrap">
+    <table class="leads">
+      <thead><tr>
+        <th>#</th><th>Date</th><th>Name</th><th>Email</th><th>Company</th>
+        <th>Inventory</th><th>CCC</th><th>Mode</th><th>Score</th><th>FCF Impact</th><th>MCap Upside</th>
+      </tr></thead>
+      <tbody id="lead-tbody"></tbody>
+    </table>
+  </div>
+  <div style="font-size:10px;color:var(--w30);margin-top:6px;">Type "leads" on the attract screen to access this dashboard.</div>
+</div>
+
+<script>
+const COMPANY_DB=[{"ticker":"8TRA","name":"TRATON SE","rating":"BBB","sector":"Industrials","marketCap":16.2,"inventory":7016.0,"sales":44051.0},{"ticker":"A","name":"AGILENT TECHNOLOGIES INC","rating":"BBB+","sector":"Health Care","marketCap":33.2,"inventory":1025.0,"sales":6948.0},{"ticker":"A2A","name":"A2A SPA","rating":"BBB","sector":"Utilities","marketCap":7.5,"inventory":311.0,"sales":13739.0},{"ticker":"AAL","name":"ANGLO AMERICAN PLC","rating":"BBB","sector":"Materials","marketCap":43.7,"inventory":3013.0,"sales":18546.0},{"ticker":"AAPL","name":"APPLE INC","rating":"AA+","sector":"Information Technology","marketCap":3805.4,"inventory":5718.0,"sales":416161.0},{"ticker":"ABBN","name":"ABB LTD-REG","rating":"A","sector":"Industrials","marketCap":139.2,"inventory":5862.0,"sales":33220.0},{"ticker":"ABBV","name":"ABBVIE INC","rating":"A-","sector":"Health Care","marketCap":365.2,"inventory":4951.0,"sales":61160.0},{"ticker":"ABF","name":"ASSOCIATED BRITISH FOODS PLC","rating":"A","sector":"Consumer Staples","marketCap":13.3,"inventory":3289.0,"sales":19459.0},{"ticker":"ABI","name":"ANHEUSER-BUSCH INBEV SA/NV","rating":"A-","sector":"Consumer Staples","marketCap":130.4,"inventory":5107.0,"sales":59320.0},{"ticker":"ABT","name":"ABBOTT LABORATORIES","rating":"AA-","sector":"Health Care","marketCap":175.4,"inventory":6488.0,"sales":44328.0},{"ticker":"ABX","name":"BARRICK GOLD CORP","rating":"BBB+","sector":"Materials","marketCap":99.5,"inventory":2068.0,"sales":16956.0},{"ticker":"ACS","name":"ACS ACTIVIDADES CONS Y SERV","rating":"BBB-","sector":"Industrials","marketCap":33.5,"inventory":874.0,"sales":49848.0},{"ticker":"AD","name":"KONINKLIJKE AHOLD DELHAIZE N","rating":"BBB+","sector":"Consumer Staples","marketCap":36.2,"inventory":4795.0,"sales":92352.0},{"ticker":"ADI","name":"ANALOG DEVICES INC","rating":"A-","sector":"Information Technology","marketCap":170.9,"inventory":1656.0,"sales":11020.0},{"ticker":"ADM","name":"ARCHER-DANIELS-MIDLAND CO","rating":"A","sector":"Consumer Staples","marketCap":33.6,"inventory":10369.0,"sales":80269.0},{"ticker":"ADS","name":"ADIDAS AG","rating":"A-","sector":"Consumer Discretionary","marketCap":26.2,"inventory":5832.0,"sales":24811.0},{"ticker":"AEE","name":"AMEREN CORPORATION","rating":"BBB+","sector":"Utilities","marketCap":30.9,"inventory":774.0,"sales":8799.0},{"ticker":"AEP","name":"AMERICAN ELECTRIC POWER","rating":"BBB+","sector":"Utilities","marketCap":73.1,"inventory":1622.0,"sales":21876.0},{"ticker":"AES","name":"AES CORP","rating":"BBB-","sector":"Utilities","marketCap":10.3,"inventory":612.0,"sales":12233.0},{"ticker":"AGCO","name":"AGCO CORP","rating":"BBB-","sector":"Industrials","marketCap":8.8,"inventory":2709.0,"sales":10082.0},{"ticker":"AI","name":"AIR LIQUIDE SA","rating":"A","sector":"Materials","marketCap":107.8,"inventory":2128.0,"sales":26940.0},{"ticker":"AIR","name":"AIRBUS SE","rating":"A","sector":"Industrials","marketCap":142.2,"inventory":41676.0,"sales":73420.0},{"ticker":"AKE","name":"ARKEMA","rating":"BBB+","sector":"Materials","marketCap":4.7,"inventory":1142.0,"sales":9068.0},{"ticker":"AKRBP","name":"AKER BP ASA","rating":"BBB","sector":"Energy","marketCap":202.8,"inventory":552.0,"sales":10943.0},{"ticker":"AKZA","name":"AKZO NOBEL N.V.","rating":"BBB","sector":"Materials","marketCap":9.3,"inventory":1529.0,"sales":10158.0},{"ticker":"ALA","name":"ALTAGAS LTD","rating":"BBB-","sector":"Utilities","marketCap":15.1,"inventory":633.0,"sales":12705.0},{"ticker":"ALB","name":"ALBEMARLE CORP","rating":"BBB-","sector":"Materials","marketCap":21.8,"inventory":1179.0,"sales":5143.0},{"ticker":"ALC","name":"ALCON INC","rating":"BBB+","sector":"Health Care","marketCap":31.9,"inventory":2391.0,"sales":10401.0},{"ticker":"ALFA","name":"ALFA LAVAL AB","rating":"BBB+","sector":"Industrials","marketCap":236.8,"inventory":15547.0,"sales":69675.0},{"ticker":"ALLE","name":"ALLEGION PLC","rating":"BBB","sector":"Industrials","marketCap":12.4,"inventory":519.0,"sales":4067.0},{"ticker":"ALTA","name":"ALTAREA","rating":"BBB-","sector":"Real Estate","marketCap":2.8,"inventory":908.0,"sales":1993.0},{"ticker":"AMAT","name":"APPLIED MATERIALS INC","rating":"A","sector":"Information Technology","marketCap":314.1,"inventory":5915.0,"sales":28368.0},{"ticker":"AMCR","name":"AMCOR PLC","rating":"BBB","sector":"Materials","marketCap":19.4,"inventory":3471.0,"sales":15009.0},{"ticker":"AMD","name":"ADVANCED MICRO DEVICES","rating":"A","sector":"Information Technology","marketCap":402.4,"inventory":7920.0,"sales":34639.0},{"ticker":"AME","name":"AMETEK INC","rating":"BBB+","sector":"Industrials","marketCap":53.7,"inventory":1106.0,"sales":7401.0},{"ticker":"AMGN","name":"AMGEN INC","rating":"BBB+","sector":"Health Care","marketCap":188.8,"inventory":6225.0,"sales":36751.0},{"ticker":"AMZN","name":"AMAZON.COM INC","rating":"AA","sector":"Consumer Discretionary","marketCap":2579.1,"inventory":38325.0,"sales":716924.0},{"ticker":"AN","name":"AUTONATION INC","rating":"BBB-","sector":"Consumer Discretionary","marketCap":6.9,"inventory":3405.0,"sales":27631.0},{"ticker":"APA","name":"APA CORP","rating":"BBB-","sector":"Energy","marketCap":14.0,"inventory":351.0,"sales":8867.0},{"ticker":"APD","name":"AIR PRODUCTS & CHEMICALS INC","rating":"A","sector":"Materials","marketCap":66.5,"inventory":776.0,"sales":12037.0},{"ticker":"APH","name":"AMPHENOL CORP-CL A","rating":"A-","sector":"Information Technology","marketCap":178.6,"inventory":3425.0,"sales":23095.0},{"ticker":"APTV","name":"APTIV PLC","rating":"BBB","sector":"Consumer Discretionary","marketCap":12.7,"inventory":1789.0,"sales":12397.0},{"ticker":"AREIT","name":"ALTAREIT","rating":"BBB-","sector":"Real Estate","marketCap":1.0,"inventory":901.0,"sales":1819.0},{"ticker":"ARW","name":"ARROW ELECTRONICS INC","rating":"BBB-","sector":"Information Technology","marketCap":8.9,"inventory":5082.0,"sales":30853.0},{"ticker":"AS","name":"AMER SPORTS INC","rating":"BBB-","sector":"Consumer Discretionary","marketCap":21.6,"inventory":1622.0,"sales":6566.0},{"ticker":"ASSAB","name":"ASSA ABLOY AB-B","rating":"A-","sector":"Industrials","marketCap":422.8,"inventory":19247.0,"sales":152408.0},{"ticker":"ATCOA","name":"ATLAS COPCO AB-A SHS","rating":"A+","sector":"Industrials","marketCap":901.9,"inventory":26659.0,"sales":168343.0},{"ticker":"ATD","name":"ALIMENTATION COUCHE-TARD INC","rating":"BBB+","sector":"Consumer Staples","marketCap":70.2,"inventory":2189.0,"sales":72857.0},{"ticker":"ATR","name":"APTARGROUP INC","rating":"BBB-","sector":"Materials","marketCap":8.4,"inventory":538.0,"sales":3777.0},{"ticker":"AVGO","name":"BROADCOM INC","rating":"BBB+","sector":"Information Technology","marketCap":1798.0,"inventory":2270.0,"sales":63887.0},{"ticker":"AVT","name":"AVNET INC","rating":"BBB-","sector":"Information Technology","marketCap":6.0,"inventory":5235.0,"sales":22201.0},{"ticker":"AVY","name":"AVERY DENNISON CORP","rating":"BBB","sector":"Materials","marketCap":13.2,"inventory":976.0,"sales":8856.0},{"ticker":"AYI","name":"ACUITY INC","rating":"BBB","sector":"Industrials","marketCap":8.6,"inventory":527.0,"sales":4346.0},{"ticker":"AYV","name":"AYVENS SA","rating":"A-","sector":"Industrials","marketCap":8.8,"inventory":818.0,"sales":25207.0},{"ticker":"AZN","name":"ASTRAZENECA PLC","rating":"A+","sector":"Health Care","marketCap":234.5,"inventory":6557.0,"sales":58739.0},{"ticker":"AZO","name":"AUTOZONE INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":57.9,"inventory":7026.0,"sales":18939.0},{"ticker":"B4B","name":"METRO AG","rating":"BBB-","sector":"Consumer Staples","marketCap":2.4,"inventory":2376.0,"sales":32447.0},{"ticker":"BA","name":"BOEING CO/THE","rating":"BBB-","sector":"Industrials","marketCap":174.6,"inventory":83268.0,"sales":89463.0},{"ticker":"BA/","name":"BAE SYSTEMS PLC","rating":"BBB+","sector":"Industrials","marketCap":67.8,"inventory":1384.0,"sales":28336.0},{"ticker":"BARN","name":"BARRY CALLEBAUT AG-REG","rating":"BBB-","sector":"Consumer Staples","marketCap":6.0,"inventory":4740.0,"sales":14789.0},{"ticker":"BAS","name":"BASF SE","rating":"A-","sector":"Materials","marketCap":47.1,"inventory":12168.0,"sales":59657.0},{"ticker":"BATS","name":"BRITISH AMERICAN TOBACCO PLC","rating":"BBB+","sector":"Consumer Staples","marketCap":89.9,"inventory":4382.0,"sales":25610.0},{"ticker":"BAX","name":"BAXTER INTERNATIONAL INC","rating":"BBB","sector":"Health Care","marketCap":9.1,"inventory":2232.0,"sales":11244.0},{"ticker":"BAYN","name":"BAYER AG-REG","rating":"BBB","sector":"Health Care","marketCap":40.3,"inventory":12378.0,"sales":45575.0},{"ticker":"BBY","name":"BEST BUY CO INC","rating":"BBB+","sector":"Consumer Discretionary","marketCap":12.7,"inventory":5085.0,"sales":41528.0},{"ticker":"BC","name":"BRUNSWICK CORP","rating":"BBB-","sector":"Consumer Discretionary","marketCap":5.0,"inventory":1192.0,"sales":5363.0},{"ticker":"BCE","name":"BCE INC","rating":"BBB","sector":"Communication Services","marketCap":30.2,"inventory":389.0,"sales":24468.0},{"ticker":"BDX","name":"BECTON DICKINSON AND CO","rating":"BBB","sector":"Health Care","marketCap":44.3,"inventory":3894.0,"sales":21840.0},{"ticker":"BF/B","name":"BROWN-FORMAN CORP-CLASS B","rating":"A-","sector":"Consumer Staples","marketCap":13.5,"inventory":2511.0,"sales":3975.0},{"ticker":"BG","name":"BUNGE GLOBAL SA","rating":"BBB+","sector":"Consumer Staples","marketCap":23.9,"inventory":13198.0,"sales":70329.0},{"ticker":"BIIB","name":"BIOGEN INC","rating":"BBB+","sector":"Health Care","marketCap":25.9,"inventory":2168.0,"sales":9891.0},{"ticker":"BIO","name":"BIO-RAD LABORATORIES-A","rating":"BBB","sector":"Health Care","marketCap":7.7,"inventory":741.0,"sales":2583.0},{"ticker":"BKR","name":"BAKER HUGHES CO","rating":"A","sector":"Energy","marketCap":62.0,"inventory":4954.0,"sales":27733.0},{"ticker":"BMW","name":"BAYERISCHE MOTOREN WERKE AG","rating":"A","sector":"Consumer Discretionary","marketCap":51.5,"inventory":21281.0,"sales":133453.0},{"ticker":"BMY","name":"BRISTOL-MYERS SQUIBB CO","rating":"A","sector":"Health Care","marketCap":118.5,"inventory":2690.0,"sales":48194.0},{"ticker":"BN","name":"BROOKFIELD CORP","rating":"A-","sector":"Financials","marketCap":147.7,"inventory":8849.0,"sales":75100.0},{"ticker":"BN.FR","name":"DANONE","rating":"BBB+","sector":"Consumer Staples","marketCap":46.4,"inventory":2324.0,"sales":27283.0},{"ticker":"BNR","name":"BRENNTAG SE","rating":"BBB+","sector":"Industrials","marketCap":8.5,"inventory":1351.0,"sales":15172.0},{"ticker":"BNZL","name":"BUNZL PLC","rating":"BBB+","sector":"Industrials","marketCap":7.6,"inventory":1683.0,"sales":11845.0},{"ticker":"BOSS","name":"HUGO BOSS AG -ORD","rating":"BBB","sector":"Consumer Discretionary","marketCap":2.6,"inventory":918.0,"sales":4270.0},{"ticker":"BP/","name":"BP PLC","rating":"A-","sector":"Energy","marketCap":84.9,"inventory":22499.0,"sales":189335.0},{"ticker":"BRK/A","name":"BERKSHIRE HATHAWAY INC-CL A","rating":"AA","sector":"Financials","marketCap":1035.9,"inventory":24424.0,"sales":371444.0},{"ticker":"BSX","name":"BOSTON SCIENTIFIC CORP","rating":"A-","sector":"Health Care","marketCap":93.9,"inventory":2944.0,"sales":20074.0},{"ticker":"BT/A","name":"BT GROUP PLC","rating":"BBB","sector":"Communication Services","marketCap":21.7,"inventory":331.0,"sales":20358.0},{"ticker":"BWA","name":"BORGWARNER INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":11.0,"inventory":1207.0,"sales":14316.0},{"ticker":"BZU","name":"BUZZI SPA","rating":"BBB","sector":"Materials","marketCap":9.7,"inventory":930.0,"sales":4519.0},{"ticker":"CA","name":"CARREFOUR SA","rating":"BBB","sector":"Consumer Staples","marketCap":12.2,"inventory":6379.0,"sales":84978.0},{"ticker":"CAE","name":"CAE INC","rating":"BBB-","sector":"Industrials","marketCap":12.2,"inventory":595.0,"sales":4708.0},{"ticker":"CAG","name":"CONAGRA BRANDS INC","rating":"BBB-","sector":"Consumer Staples","marketCap":6.9,"inventory":2048.0,"sales":11613.0},{"ticker":"CAH","name":"CARDINAL HEALTH INC","rating":"BBB","sector":"Health Care","marketCap":50.4,"inventory":16831.0,"sales":222578.0},{"ticker":"CARR","name":"CARRIER GLOBAL CORP","rating":"BBB+","sector":"Industrials","marketCap":53.7,"inventory":2483.0,"sales":21747.0},{"ticker":"CAT","name":"CATERPILLAR INC","rating":"A","sector":"Industrials","marketCap":368.4,"inventory":18135.0,"sales":67589.0},{"ticker":"CBT","name":"CABOT CORP","rating":"BBB","sector":"Materials","marketCap":3.9,"inventory":504.0,"sales":3713.0},{"ticker":"CCH","name":"COCA-COLA HBC AG-DI","rating":"BBB+","sector":"Consumer Staples","marketCap":16.1,"inventory":840.0,"sales":11604.0},{"ticker":"CCL/B","name":"CCL INDUSTRIES INC - CL B","rating":"BBB","sector":"Materials","marketCap":15.4,"inventory":805.0,"sales":7664.0},{"ticker":"CCO","name":"CAMECO CORP","rating":"BBB-","sector":"Energy","marketCap":70.0,"inventory":844.0,"sales":3482.0},{"ticker":"CDNS","name":"CADENCE DESIGN SYS INC","rating":"BBB+","sector":"Information Technology","marketCap":79.6,"inventory":304.0,"sales":5297.0},{"ticker":"CDW","name":"CDW CORP/DE","rating":"BBB-","sector":"Information Technology","marketCap":16.9,"inventory":563.0,"sales":22424.0},{"ticker":"CF","name":"CF INDUSTRIES HOLDINGS INC","rating":"BBB","sector":"Materials","marketCap":18.7,"inventory":383.0,"sales":7084.0},{"ticker":"CFR","name":"CIE FINANCIERE RICHEMO-A REG","rating":"A+","sector":"Consumer Discretionary","marketCap":94.6,"inventory":9013.0,"sales":21399.0},{"ticker":"CHD","name":"CHURCH & DWIGHT CO INC","rating":"BBB+","sector":"Consumer Staples","marketCap":22.5,"inventory":535.0,"sales":6203.0},{"ticker":"CI","name":"THE CIGNA GROUP","rating":"A-","sector":"Health Care","marketCap":72.5,"inventory":7338.0,"sales":274900.0},{"ticker":"CL","name":"COLGATE-PALMOLIVE CO","rating":"A+","sector":"Consumer Staples","marketCap":67.4,"inventory":2032.0,"sales":20382.0},{"ticker":"CLN","name":"CLARIANT AG-REG","rating":"BBB-","sector":"Materials","marketCap":2.7,"inventory":641.0,"sales":3915.0},{"ticker":"CLX","name":"CLOROX COMPANY","rating":"BBB+","sector":"Consumer Staples","marketCap":12.5,"inventory":523.0,"sales":7104.0},{"ticker":"CMI","name":"CUMMINS INC","rating":"A","sector":"Industrials","marketCap":85.5,"inventory":5822.0,"sales":33670.0},{"ticker":"CMS","name":"CMS ENERGY CORP","rating":"BBB+","sector":"Utilities","marketCap":24.2,"inventory":791.0,"sales":8539.0},{"ticker":"CNA","name":"CENTRICA PLC","rating":"BBB","sector":"Utilities","marketCap":9.1,"inventory":339.0,"sales":19492.0},{"ticker":"CNH","name":"CNH INDUSTRIAL NV","rating":"BBB+","sector":"Industrials","marketCap":13.1,"inventory":4651.0,"sales":18095.0},{"ticker":"CNP","name":"CENTERPOINT ENERGY INC","rating":"BBB+","sector":"Utilities","marketCap":27.9,"inventory":732.0,"sales":9357.0},{"ticker":"CNQ","name":"CANADIAN NATURAL RESOURCES","rating":"BBB-","sector":"Energy","marketCap":134.9,"inventory":2621.0,"sales":38762.0},{"ticker":"CNR","name":"CANADIAN NATL RAILWAY CO","rating":"A-","sector":"Industrials","marketCap":93.5,"inventory":734.0,"sales":17304.0},{"ticker":"COKE","name":"COCA-COLA CONSOLIDATED INC","rating":"BBB+","sector":"Consumer Staples","marketCap":13.2,"inventory":336.0,"sales":7228.0},{"ticker":"COLOB","name":"COLOPLAST-B","rating":"BBB+","sector":"Health Care","marketCap":102.3,"inventory":3919.0,"sales":27874.0},{"ticker":"CON","name":"CONTINENTAL AG","rating":"BBB","sector":"Consumer Discretionary","marketCap":13.4,"inventory":3067.0,"sales":19676.0},{"ticker":"COP","name":"CONOCOPHILLIPS","rating":"A-","sector":"Energy","marketCap":150.9,"inventory":1873.0,"sales":58944.0},{"ticker":"COR","name":"CENCORA INC","rating":"BBB+","sector":"Health Care","marketCap":62.1,"inventory":20492.0,"sales":321333.0},{"ticker":"COST","name":"COSTCO WHOLESALE CORP","rating":"AA","sector":"Consumer Staples","marketCap":435.2,"inventory":18116.0,"sales":275235.0},{"ticker":"CP","name":"CANADIAN PACIFIC KANSAS CITY","rating":"BBB+","sector":"Industrials","marketCap":100.6,"inventory":502.0,"sales":15078.0},{"ticker":"CPB","name":"THE CAMPBELL'S COMPANY","rating":"BBB-","sector":"Consumer Staples","marketCap":6.0,"inventory":1424.0,"sales":10253.0},{"ticker":"CPG","name":"COMPASS GROUP PLC","rating":"A","sector":"Consumer Discretionary","marketCap":48.4,"inventory":820.0,"sales":46070.0},{"ticker":"CRH","name":"CRH PLC","rating":"BBB+","sector":"Materials","marketCap":78.5,"inventory":5251.0,"sales":37447.0},{"ticker":"CSCO","name":"CISCO SYSTEMS INC","rating":"AA-","sector":"Information Technology","marketCap":325.3,"inventory":3164.0,"sales":56654.0},{"ticker":"CSL","name":"CARLISLE COS INC","rating":"BBB","sector":"Industrials","marketCap":14.6,"inventory":447.0,"sales":5020.0},{"ticker":"CSX","name":"CSX CORP","rating":"BBB+","sector":"Industrials","marketCap":78.8,"inventory":390.0,"sales":14092.0},{"ticker":"CTAS","name":"CINTAS CORP","rating":"A-","sector":"Industrials","marketCap":70.3,"inventory":447.0,"sales":10340.0},{"ticker":"CTC/A","name":"CANADIAN TIRE CORP-CLASS A","rating":"BBB","sector":"Consumer Discretionary","marketCap":10.5,"inventory":2418.0,"sales":16316.0},{"ticker":"CTEC","name":"CONVATEC GROUP PLC","rating":"BBB-","sector":"Health Care","marketCap":4.7,"inventory":416.0,"sales":2439.0},{"ticker":"CTVA","name":"CORTEVA INC","rating":"A-","sector":"Materials","marketCap":56.1,"inventory":5667.0,"sales":17401.0},{"ticker":"CVE","name":"CENOVUS ENERGY INC","rating":"BBB","sector":"Energy","marketCap":68.2,"inventory":3349.0,"sales":49718.0},{"ticker":"CVS","name":"CVS HEALTH CORP","rating":"BBB","sector":"Health Care","marketCap":100.1,"inventory":19246.0,"sales":402067.0},{"ticker":"CVX","name":"CHEVRON CORP","rating":"AA-","sector":"Energy","marketCap":382.0,"inventory":9711.0,"sales":184432.0},{"ticker":"D","name":"DOMINION ENERGY INC","rating":"BBB+","sector":"Utilities","marketCap":55.3,"inventory":1957.0,"sales":16506.0},{"ticker":"DAL","name":"DELTA AIR LINES INC","rating":"BBB-","sector":"Industrials","marketCap":44.1,"inventory":1601.0,"sales":63364.0},{"ticker":"DCC","name":"DCC PLC","rating":"BBB","sector":"Energy","marketCap":4.5,"inventory":940.0,"sales":18011.0},{"ticker":"DD","name":"DUPONT DE NEMOURS INC","rating":"BBB+","sector":"Materials","marketCap":19.3,"inventory":1172.0,"sales":6849.0},{"ticker":"DE","name":"DEERE & CO","rating":"A","sector":"Industrials","marketCap":162.9,"inventory":7406.0,"sales":45684.0},{"ticker":"DELL","name":"DELL TECHNOLOGIES -C","rating":"BBB","sector":"Information Technology","marketCap":124.8,"inventory":6716.0,"sales":95567.0},{"ticker":"DG","name":"DOLLAR GENERAL CORP","rating":"BBB","sector":"Consumer Staples","marketCap":26.3,"inventory":6711.0,"sales":40612.0},{"ticker":"DG.FR","name":"VINCI SA","rating":"A-","sector":"Industrials","marketCap":80.1,"inventory":1700.0,"sales":75371.0},{"ticker":"DGE","name":"DIAGEO PLC","rating":"A-","sector":"Consumer Staples","marketCap":33.8,"inventory":10658.0,"sales":20245.0},{"ticker":"DHI","name":"DR HORTON INC","rating":"BBB+","sector":"Consumer Discretionary","marketCap":41.8,"inventory":25287.0,"sales":34250.0},{"ticker":"DHR","name":"DANAHER CORP","rating":"A-","sector":"Health Care","marketCap":138.6,"inventory":2489.0,"sales":24568.0},{"ticker":"DINO","name":"HF SINCLAIR CORP","rating":"BBB-","sector":"Energy","marketCap":10.6,"inventory":2573.0,"sales":26869.0},{"ticker":"DIS","name":"WALT DISNEY CO/THE","rating":"A","sector":"Communication Services","marketCap":179.2,"inventory":2134.0,"sales":94425.0},{"ticker":"DKS","name":"DICK'S SPORTING GOODS INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":18.8,"inventory":3350.0,"sales":13443.0},{"ticker":"DLTR","name":"DOLLAR TREE INC","rating":"BBB","sector":"Consumer Staples","marketCap":20.2,"inventory":2672.0,"sales":17578.0},{"ticker":"DOL","name":"DOLLARAMA INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":48.1,"inventory":921.0,"sales":6413.0},{"ticker":"DOV","name":"DOVER CORP","rating":"BBB+","sector":"Industrials","marketCap":29.6,"inventory":1273.0,"sales":8093.0},{"ticker":"DRI","name":"DARDEN RESTAURANTS INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":22.0,"inventory":312.0,"sales":12077.0},{"ticker":"DSFIR","name":"DSM-FIRMENICH AG","rating":"A-","sector":"Materials","marketCap":16.7,"inventory":2121.0,"sales":9034.0},{"ticker":"DSV","name":"DSV A/S","rating":"A-","sector":"Industrials","marketCap":411.8,"inventory":2095.0,"sales":247331.0},{"ticker":"DTE","name":"DTE ENERGY COMPANY","rating":"BBB+","sector":"Utilities","marketCap":30.7,"inventory":1375.0,"sales":15814.0},{"ticker":"DTE.DE","name":"DEUTSCHE TELEKOM AG-REG","rating":"BBB+","sector":"Communication Services","marketCap":144.4,"inventory":2866.0,"sales":119081.0},{"ticker":"DTG","name":"DAIMLER TRUCK HOLDING AG","rating":"A-","sector":"Industrials","marketCap":33.3,"inventory":7210.0,"sales":45530.0},{"ticker":"DUK","name":"DUKE ENERGY CORP","rating":"BBB+","sector":"Utilities","marketCap":101.5,"inventory":4569.0,"sales":32237.0},{"ticker":"DVN","name":"DEVON ENERGY CORP","rating":"BBB","sector":"Energy","marketCap":29.4,"inventory":336.0,"sales":17188.0},{"ticker":"EBK","name":"ENBW ENERGIE BADEN-WUERTTEMB","rating":"A-","sector":"Utilities","marketCap":22.7,"inventory":2417.0,"sales":34390.0},{"ticker":"ECL","name":"ECOLAB INC","rating":"A-","sector":"Materials","marketCap":77.7,"inventory":1490.0,"sales":16081.0},{"ticker":"ED","name":"CONSOLIDATED EDISON INC","rating":"A-","sector":"Utilities","marketCap":41.2,"inventory":530.0,"sales":16918.0},{"ticker":"EDP","name":"EDP SA","rating":"BBB","sector":"Utilities","marketCap":18.5,"inventory":504.0,"sales":15607.0},{"ticker":"EIX","name":"EDISON INTERNATIONAL","rating":"BBB","sector":"Utilities","marketCap":27.9,"inventory":535.0,"sales":19317.0},{"ticker":"EKTAB","name":"ELEKTA AB-B SHS","rating":"BBB-","sector":"Health Care","marketCap":22.3,"inventory":2756.0,"sales":18016.0},{"ticker":"EL","name":"ESTEE LAUDER COMPANIES-CL A","rating":"A-","sector":"Consumer Staples","marketCap":27.8,"inventory":2074.0,"sales":14326.0},{"ticker":"EL.FR","name":"ESSILORLUXOTTICA","rating":"A","sector":"Health Care","marketCap":99.9,"inventory":3542.0,"sales":28491.0},{"ticker":"ELE","name":"ENDESA SA","rating":"BBB","sector":"Utilities","marketCap":39.0,"inventory":2050.0,"sales":21424.0},{"ticker":"ELUXB","name":"ELECTROLUX AB-B","rating":"BBB","sector":"Consumer Discretionary","marketCap":18.2,"inventory":19980.0,"sales":131282.0},{"ticker":"EMA","name":"EMERA INC","rating":"BBB","sector":"Utilities","marketCap":21.9,"inventory":821.0,"sales":8776.0},{"ticker":"EMN","name":"EASTMAN CHEMICAL CO","rating":"BBB","sector":"Materials","marketCap":8.5,"inventory":1980.0,"sales":8752.0},{"ticker":"EMR","name":"EMERSON ELECTRIC CO","rating":"A","sector":"Industrials","marketCap":81.2,"inventory":2213.0,"sales":18016.0},{"ticker":"EN","name":"BOUYGUES SA","rating":"A-","sector":"Industrials","marketCap":20.2,"inventory":2704.0,"sales":56877.0},{"ticker":"ENB","name":"ENBRIDGE INC","rating":"BBB+","sector":"Energy","marketCap":160.9,"inventory":1621.0,"sales":65194.0},{"ticker":"ENEL","name":"ENEL SPA","rating":"BBB","sector":"Utilities","marketCap":98.9,"inventory":3301.0,"sales":78057.0},{"ticker":"ENGI","name":"ENGIE","rating":"BBB+","sector":"Utilities","marketCap":71.1,"inventory":2852.0,"sales":71944.0},{"ticker":"ENI","name":"ENI SPA","rating":"A-","sector":"Energy","marketCap":65.9,"inventory":5143.0,"sales":82151.0},{"ticker":"ENR","name":"SIEMENS ENERGY AG","rating":"BBB-","sector":"Industrials","marketCap":146.9,"inventory":10377.0,"sales":39077.0},{"ticker":"EOAN","name":"E.ON SE","rating":"BBB+","sector":"Utilities","marketCap":49.8,"inventory":1457.0,"sales":78704.0},{"ticker":"EOG","name":"EOG RESOURCES INC","rating":"A-","sector":"Energy","marketCap":73.4,"inventory":1014.0,"sales":22598.0},{"ticker":"EPD","name":"ENTERPRISE PRODUCTS PARTNERS","rating":"A-","sector":"Energy","marketCap":80.9,"inventory":3884.0,"sales":52596.0},{"ticker":"EPIA","name":"EPIROC AB-A","rating":"BBB+","sector":"Industrials","marketCap":296.1,"inventory":18100.0,"sales":61998.0},{"ticker":"EQNR","name":"EQUINOR ASA","rating":"AA-","sector":"Energy","marketCap":840.4,"inventory":3330.0,"sales":105828.0},{"ticker":"ERICB","name":"ERICSSON LM-B SHS","rating":"BBB-","sector":"Information Technology","marketCap":356.1,"inventory":23451.0,"sales":236681.0},{"ticker":"ES","name":"EVERSOURCE ENERGY","rating":"BBB+","sector":"Utilities","marketCap":25.8,"inventory":492.0,"sales":13547.0},{"ticker":"ESSITYA","name":"ESSITY AKTIEBOLAG-A","rating":"BBB+","sector":"Consumer Staples","marketCap":172.4,"inventory":18153.0,"sales":138494.0},{"ticker":"ET","name":"ENERGY TRANSFER LP","rating":"BBB","sector":"Energy","marketCap":64.8,"inventory":4770.0,"sales":85536.0},{"ticker":"ETN","name":"EATON CORP PLC","rating":"A-","sector":"Industrials","marketCap":157.6,"inventory":4721.0,"sales":27448.0},{"ticker":"ETR","name":"ENTERGY CORP","rating":"BBB+","sector":"Utilities","marketCap":52.8,"inventory":1842.0,"sales":12947.0},{"ticker":"EVK","name":"EVONIK INDUSTRIES AG","rating":"BBB+","sector":"Materials","marketCap":7.9,"inventory":2300.0,"sales":14069.0},{"ticker":"EVRG","name":"EVERGY INC","rating":"BBB+","sector":"Utilities","marketCap":18.9,"inventory":829.0,"sales":5962.0},{"ticker":"EW","name":"EDWARDS LIFESCIENCES CORP","rating":"BBB","sector":"Health Care","marketCap":45.0,"inventory":1126.0,"sales":6068.0},{"ticker":"EXC","name":"EXELON CORP","rating":"A-","sector":"Utilities","marketCap":49.3,"inventory":868.0,"sales":24258.0},{"ticker":"EXP","name":"EAGLE MATERIALS INC","rating":"BBB","sector":"Materials","marketCap":6.3,"inventory":415.0,"sales":2261.0},{"ticker":"F","name":"FORD MOTOR CO","rating":"BBB-","sector":"Consumer Discretionary","marketCap":48.8,"inventory":15285.0,"sales":187267.0},{"ticker":"FBIN","name":"FORTUNE BRANDS INNOVATIONS I","rating":"BBB","sector":"Industrials","marketCap":4.9,"inventory":1025.0,"sales":4463.0},{"ticker":"FCX","name":"FREEPORT-MCMORAN INC","rating":"BBB-","sector":"Materials","marketCap":97.8,"inventory":7493.0,"sales":25915.0},{"ticker":"FDX","name":"FEDEX CORP","rating":"BBB","sector":"Industrials","marketCap":88.7,"inventory":602.0,"sales":87926.0},{"ticker":"FE","name":"FIRSTENERGY CORP","rating":"BBB","sector":"Utilities","marketCap":29.5,"inventory":577.0,"sales":15090.0},{"ticker":"FER","name":"FERROVIAL SE","rating":"BBB","sector":"Industrials","marketCap":44.7,"inventory":541.0,"sales":9627.0},{"ticker":"FLEX","name":"FLEX LTD","rating":"BBB-","sector":"Information Technology","marketCap":28.8,"inventory":5071.0,"sales":25813.0},{"ticker":"FLO","name":"FLOWERS FOODS INC","rating":"BBB","sector":"Consumer Staples","marketCap":1.7,"inventory":299.0,"sales":5256.0},{"ticker":"FLS","name":"FLOWSERVE CORP","rating":"BBB-","sector":"Industrials","marketCap":10.8,"inventory":790.0,"sales":4729.0},{"ticker":"FMC","name":"FMC CORP","rating":"BBB-","sector":"Materials","marketCap":2.3,"inventory":1220.0,"sales":3467.0},{"ticker":"FME","name":"FRESENIUS MEDICAL CARE AG","rating":"BBB-","sector":"Health Care","marketCap":11.7,"inventory":2141.0,"sales":19628.0},{"ticker":"FORTUM","name":"FORTUM OYJ","rating":"BBB+","sector":"Utilities","marketCap":19.0,"inventory":512.0,"sales":4989.0},{"ticker":"FOXA","name":"FOX CORP - CLASS A","rating":"BBB","sector":"Communication Services","marketCap":25.2,"inventory":432.0,"sales":16300.0},{"ticker":"FRE","name":"FRESENIUS SE & CO KGAA","rating":"BBB","sector":"Health Care","marketCap":25.1,"inventory":2611.0,"sales":22873.0},{"ticker":"FTI","name":"TECHNIPFMC PLC","rating":"BBB-","sector":"Energy","marketCap":28.2,"inventory":1153.0,"sales":9933.0},{"ticker":"FTNT","name":"FORTINET INC","rating":"BBB+","sector":"Information Technology","marketCap":58.3,"inventory":400.0,"sales":6800.0},{"ticker":"FTS","name":"FORTIS INC","rating":"A-","sector":"Utilities","marketCap":39.8,"inventory":649.0,"sales":12170.0},{"ticker":"FTT","name":"FINNING INTERNATIONAL INC","rating":"BBB+","sector":"Industrials","marketCap":11.9,"inventory":2952.0,"sales":10591.0},{"ticker":"FTV","name":"FORTIVE CORP","rating":"BBB","sector":"Industrials","marketCap":18.4,"inventory":292.0,"sales":4159.0},{"ticker":"GD","name":"GENERAL DYNAMICS CORP","rating":"A","sector":"Industrials","marketCap":92.3,"inventory":9232.0,"sales":52550.0},{"ticker":"GE","name":"GENERAL ELECTRIC","rating":"A-","sector":"Industrials","marketCap":325.9,"inventory":11868.0,"sales":45855.0},{"ticker":"GEBN","name":"GEBERIT AG-REG","rating":"A","sector":"Industrials","marketCap":19.0,"inventory":367.0,"sales":3163.0},{"ticker":"GEHC","name":"GE HEALTHCARE TECHNOLOGY","rating":"BBB","sector":"Health Care","marketCap":33.7,"inventory":2234.0,"sales":20625.0},{"ticker":"GEV","name":"GE VERNOVA INC","rating":"BBB-","sector":"Industrials","marketCap":266.5,"inventory":10430.0,"sales":38068.0},{"ticker":"GIB/A","name":"CGI INC","rating":"BBB+","sector":"Information Technology","marketCap":21.6,"inventory":1368.0,"sales":15913.0},{"ticker":"GILD","name":"GILEAD SCIENCES INC","rating":"A-","sector":"Health Care","marketCap":172.6,"inventory":1773.0,"sales":29443.0},{"ticker":"GIS","name":"GENERAL MILLS INC","rating":"BBB","sector":"Consumer Staples","marketCap":18.4,"inventory":1911.0,"sales":19487.0},{"ticker":"GIVN","name":"GIVAUDAN-REG","rating":"A-","sector":"Materials","marketCap":27.4,"inventory":1425.0,"sales":7472.0},{"ticker":"GLEN","name":"GLENCORE PLC","rating":"BBB+","sector":"Materials","marketCap":64.2,"inventory":32882.0,"sales":247535.0},{"ticker":"GLW","name":"CORNING INC","rating":"BBB+","sector":"Information Technology","marketCap":150.5,"inventory":3077.0,"sales":15629.0},{"ticker":"GM","name":"GENERAL MOTORS CO","rating":"BBB","sector":"Consumer Discretionary","marketCap":69.5,"inventory":14467.0,"sales":185019.0},{"ticker":"GPC","name":"GENUINE PARTS CO","rating":"BBB","sector":"Consumer Discretionary","marketCap":15.3,"inventory":6072.0,"sales":24300.0},{"ticker":"GSK","name":"GSK PLC","rating":"A","sector":"Health Care","marketCap":87.0,"inventory":5924.0,"sales":32667.0},{"ticker":"GWW","name":"WW GRAINGER INC","rating":"A+","sector":"Industrials","marketCap":55.0,"inventory":2394.0,"sales":17942.0},{"ticker":"HAL","name":"HALLIBURTON CO","rating":"BBB+","sector":"Energy","marketCap":32.2,"inventory":2976.0,"sales":22184.0},{"ticker":"HAS","name":"HASBRO INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":13.0,"inventory":260.0,"sales":4701.0},{"ticker":"HBR","name":"HARBOUR ENERGY PLC","rating":"BBB-","sector":"Energy","marketCap":4.1,"inventory":398.0,"sales":10091.0},{"ticker":"HCA","name":"HCA HEALTHCARE INC","rating":"BBB-","sector":"Health Care","marketCap":111.2,"inventory":1652.0,"sales":75600.0},{"ticker":"HD","name":"HOME DEPOT INC","rating":"A","sector":"Consumer Discretionary","marketCap":339.8,"inventory":23451.0,"sales":159514.0},{"ticker":"HEI","name":"HEIDELBERG MATERIALS AG","rating":"BBB","sector":"Materials","marketCap":34.4,"inventory":2770.0,"sales":21460.0},{"ticker":"HEIA","name":"HEINEKEN NV","rating":"BBB+","sector":"Consumer Staples","marketCap":39.5,"inventory":3263.0,"sales":28753.0},{"ticker":"HEN3","name":"HENKEL AG & CO KGAA VOR-PREF","rating":"A","sector":"Consumer Staples","marketCap":28.2,"inventory":2376.0,"sales":20495.0},{"ticker":"HES","name":"HESS CORP","rating":"BBB-","sector":"Energy","marketCap":0.0,"inventory":419.0,"sales":12896.0},{"ticker":"HIK","name":"HIKMA PHARMACEUTICALS PLC","rating":"BBB-","sector":"Health Care","marketCap":3.0,"inventory":1106.0,"sales":3349.0},{"ticker":"HLN","name":"HALEON PLC","rating":"BBB+","sector":"Health Care","marketCap":31.9,"inventory":1025.0,"sales":11030.0},{"ticker":"HLUNB","name":"H LUNDBECK A/S","rating":"BBB-","sector":"Health Care","marketCap":40.8,"inventory":4473.0,"sales":24630.0},{"ticker":"HMB","name":"HENNES & MAURITZ AB-B SHS","rating":"BBB","sector":"Consumer Discretionary","marketCap":286.4,"inventory":35427.0,"sales":228285.0},{"ticker":"HO","name":"THALES SA","rating":"A-","sector":"Industrials","marketCap":54.5,"inventory":4964.0,"sales":22136.0},{"ticker":"HOG","name":"HARLEY-DAVIDSON INC","rating":"BBB-","sector":"Consumer Discretionary","marketCap":2.5,"inventory":731.0,"sales":4473.0},{"ticker":"HOLMB","name":"HOLMEN AB-B SHARES","rating":"BBB+","sector":"Materials","marketCap":54.3,"inventory":5651.0,"sales":22056.0},{"ticker":"HOLN","name":"HOLCIM LTD","rating":"BBB+","sector":"Materials","marketCap":42.0,"inventory":1716.0,"sales":15724.0},{"ticker":"HOLX","name":"HOLOGIC INC","rating":"BBB-","sector":"Health Care","marketCap":17.0,"inventory":679.0,"sales":4100.0},{"ticker":"HON","name":"HONEYWELL INTERNATIONAL INC","rating":"A","sector":"Industrials","marketCap":148.0,"inventory":6162.0,"sales":37442.0},{"ticker":"HOT","name":"HOCHTIEF AG","rating":"BBB-","sector":"Industrials","marketCap":35.8,"inventory":375.0,"sales":38236.0},{"ticker":"HPE","name":"HEWLETT PACKARD ENTERPRISE","rating":"BBB","sector":"Information Technology","marketCap":32.9,"inventory":6352.0,"sales":34296.0},{"ticker":"HPQ","name":"HP INC","rating":"BBB","sector":"Information Technology","marketCap":17.6,"inventory":8512.0,"sales":55295.0},{"ticker":"HRL","name":"HORMEL FOODS CORP","rating":"A-","sector":"Consumer Staples","marketCap":11.3,"inventory":1747.0,"sales":12106.0},{"ticker":"HSY","name":"HERSHEY CO/THE","rating":"A","sector":"Consumer Staples","marketCap":40.1,"inventory":1429.0,"sales":11693.0},{"ticker":"HUBB","name":"HUBBELL INC","rating":"BBB+","sector":"Industrials","marketCap":28.6,"inventory":1084.0,"sales":5845.0},{"ticker":"HUN","name":"HUNTSMAN CORP","rating":"BBB-","sector":"Materials","marketCap":2.4,"inventory":818.0,"sales":5683.0},{"ticker":"HUSQB","name":"HUSQVARNA AB-B SHS","rating":"BBB-","sector":"Industrials","marketCap":24.0,"inventory":13847.0,"sales":46613.0},{"ticker":"HWM","name":"HOWMET AEROSPACE INC","rating":"BBB","sector":"Industrials","marketCap":102.6,"inventory":1849.0,"sales":8252.0},{"ticker":"IAG","name":"INTL CONSOLIDATED AIRLINE-DI","rating":"BBB","sector":"Industrials","marketCap":18.5,"inventory":699.0,"sales":33213.0},{"ticker":"IBE","name":"IBERDROLA SA","rating":"BBB+","sector":"Utilities","marketCap":133.8,"inventory":2364.0,"sales":44076.0},{"ticker":"IBM","name":"INTL BUSINESS MACHINES CORP","rating":"A-","sector":"Information Technology","marketCap":223.2,"inventory":1220.0,"sales":67535.0},{"ticker":"IEX","name":"IDEX CORP","rating":"BBB","sector":"Industrials","marketCap":15.2,"inventory":479.0,"sales":3458.0},{"ticker":"IFF","name":"INTL FLAVORS & FRAGRANCES","rating":"BBB-","sector":"Materials","marketCap":18.3,"inventory":2245.0,"sales":10890.0},{"ticker":"IFX","name":"INFINEON TECHNOLOGIES AG","rating":"BBB+","sector":"Information Technology","marketCap":63.1,"inventory":4141.0,"sales":14662.0},{"ticker":"ILMN","name":"ILLUMINA INC","rating":"BBB","sector":"Health Care","marketCap":19.3,"inventory":564.0,"sales":4343.0},{"ticker":"IMB","name":"IMPERIAL BRANDS PLC","rating":"BBB","sector":"Consumer Staples","marketCap":21.6,"inventory":4466.0,"sales":32171.0},{"ticker":"IMO","name":"IMPERIAL OIL LTD","rating":"AA-","sector":"Energy","marketCap":86.7,"inventory":2904.0,"sales":45203.0},{"ticker":"INDT","name":"INDUTRADE AB","rating":"BBB-","sector":"Industrials","marketCap":92.8,"inventory":5032.0,"sales":32229.0},{"ticker":"INFVP","name":"INFRABEL SA","rating":"AA","sector":"","marketCap":0.0,"inventory":319.0,"sales":1369.0},{"ticker":"INGR","name":"INGREDION INC","rating":"BBB","sector":"Consumer Staples","marketCap":7.2,"inventory":1227.0,"sales":7219.0},{"ticker":"INTC","name":"INTEL CORP","rating":"BBB","sector":"Information Technology","marketCap":327.3,"inventory":11618.0,"sales":52853.0},{"ticker":"IP","name":"INTERNATIONAL PAPER CO","rating":"BBB","sector":"Materials","marketCap":19.4,"inventory":2012.0,"sales":23634.0},{"ticker":"IPN","name":"IPSEN","rating":"BBB-","sector":"Health Care","marketCap":13.6,"inventory":241.0,"sales":3929.0},{"ticker":"IR","name":"INGERSOLL-RAND INC","rating":"BBB","sector":"Industrials","marketCap":34.3,"inventory":1173.0,"sales":7651.0},{"ticker":"ISS","name":"ISS A/S","rating":"BBB","sector":"Industrials","marketCap":42.3,"inventory":245.0,"sales":84684.0},{"ticker":"ITT","name":"ITT INC","rating":"BBB","sector":"Industrials","marketCap":19.7,"inventory":672.0,"sales":3938.0},{"ticker":"ITV","name":"ITV PLC","rating":"BBB-","sector":"Communication Services","marketCap":3.1,"inventory":397.0,"sales":3511.0},{"ticker":"ITW","name":"ILLINOIS TOOL WORKS","rating":"A+","sector":"Industrials","marketCap":79.1,"inventory":1659.0,"sales":16044.0},{"ticker":"JBL","name":"JABIL INC","rating":"BBB-","sector":"Information Technology","marketCap":32.2,"inventory":4681.0,"sales":29802.0},{"ticker":"JCI","name":"JOHNSON CONTROLS INTERNATION","rating":"BBB+","sector":"Industrials","marketCap":87.4,"inventory":1820.0,"sales":23596.0},{"ticker":"JDEP","name":"JDE PEET'S NV","rating":"BBB-","sector":"Consumer Staples","marketCap":16.0,"inventory":1982.0,"sales":9921.0},{"ticker":"JNJ","name":"JOHNSON & JOHNSON","rating":"AAA","sector":"Health Care","marketCap":573.2,"inventory":14191.0,"sales":94193.0},{"ticker":"JNPR","name":"JUNIPER NETWORKS INC","rating":"BBB","sector":"Information Technology","marketCap":0.0,"inventory":830.0,"sales":5074.0},{"ticker":"K","name":"KINROSS GOLD CORP","rating":"BBB-","sector":"Materials","marketCap":55.5,"inventory":1370.0,"sales":7051.0},{"ticker":"KBX","name":"KNORR-BREMSE AG","rating":"A-","sector":"Industrials","marketCap":17.0,"inventory":1057.0,"sales":7817.0},{"ticker":"KDP","name":"KEURIG DR PEPPER INC","rating":"BBB","sector":"Consumer Staples","marketCap":35.4,"inventory":1733.0,"sales":16603.0},{"ticker":"KER","name":"KERING","rating":"BBB+","sector":"Consumer Discretionary","marketCap":31.3,"inventory":3678.0,"sales":14675.0},{"ticker":"KEX","name":"KIRBY CORP","rating":"BBB","sector":"Industrials","marketCap":7.6,"inventory":398.0,"sales":3364.0},{"ticker":"KEY","name":"KEYERA CORP","rating":"BBB","sector":"Energy","marketCap":14.5,"inventory":206.0,"sales":6854.0},{"ticker":"KEYS","name":"KEYSIGHT TECHNOLOGIES IN","rating":"BBB","sector":"Information Technology","marketCap":56.8,"inventory":1050.0,"sales":5375.0},{"ticker":"KGF","name":"KINGFISHER PLC","rating":"BBB","sector":"Consumer Discretionary","marketCap":5.3,"inventory":2719.0,"sales":12784.0},{"ticker":"KGX","name":"KION GROUP AG","rating":"BBB-","sector":"Industrials","marketCap":6.3,"inventory":1632.0,"sales":11297.0},{"ticker":"KHC","name":"KRAFT HEINZ CO/THE","rating":"BBB","sector":"Consumer Staples","marketCap":26.6,"inventory":3167.0,"sales":24942.0},{"ticker":"KLAC","name":"KLA CORP","rating":"A-","sector":"Information Technology","marketCap":231.8,"inventory":3212.0,"sales":12156.0},{"ticker":"KMB","name":"KIMBERLY-CLARK CORP","rating":"A","sector":"Consumer Staples","marketCap":32.1,"inventory":1475.0,"sales":16447.0},{"ticker":"KMI","name":"KINDER MORGAN INC","rating":"BBB","sector":"Energy","marketCap":71.3,"inventory":574.0,"sales":16937.0},{"ticker":"KMT","name":"KENNAMETAL INC","rating":"BBB","sector":"Industrials","marketCap":3.0,"inventory":538.0,"sales":1967.0},{"ticker":"KO","name":"COCA-COLA CO/THE","rating":"A+","sector":"Consumer Staples","marketCap":328.9,"inventory":4425.0,"sales":47941.0},{"ticker":"KR","name":"KROGER CO","rating":"BBB","sector":"Consumer Staples","marketCap":41.7,"inventory":7038.0,"sales":147123.0},{"ticker":"KSP","name":"KINGSPAN GROUP PLC","rating":"BBB","sector":"Industrials","marketCap":14.9,"inventory":1216.0,"sales":9199.0},{"ticker":"KVUE","name":"KENVUE INC","rating":"A","sector":"Consumer Staples","marketCap":33.1,"inventory":1666.0,"sales":15124.0},{"ticker":"KYGA","name":"KERRY GROUP PLC-A","rating":"BBB+","sector":"Consumer Staples","marketCap":11.0,"inventory":959.0,"sales":6758.0},{"ticker":"L","name":"LOBLAW COMPANIES LTD","rating":"BBB+","sector":"Consumer Staples","marketCap":72.7,"inventory":6491.0,"sales":63903.0},{"ticker":"LDO","name":"LEONARDO SPA","rating":"BBB-","sector":"Industrials","marketCap":33.4,"inventory":7028.0,"sales":19503.0},{"ticker":"LDOS","name":"LEIDOS HOLDINGS INC","rating":"BBB","sector":"Industrials","marketCap":19.8,"inventory":342.0,"sales":17174.0},{"ticker":"LEA","name":"LEAR CORP","rating":"BBB","sector":"Consumer Discretionary","marketCap":6.2,"inventory":1693.0,"sales":23259.0},{"ticker":"LEG","name":"LEGGETT & PLATT INC","rating":"BBB-","sector":"Consumer Discretionary","marketCap":1.5,"inventory":623.0,"sales":4055.0},{"ticker":"LEN","name":"LENNAR CORP-A","rating":"BBB","sector":"Consumer Discretionary","marketCap":22.0,"inventory":11841.0,"sales":34187.0},{"ticker":"LH","name":"LABCORP HOLDINGS INC","rating":"BBB","sector":"Health Care","marketCap":21.7,"inventory":535.0,"sales":13952.0},{"ticker":"LHA","name":"DEUTSCHE LUFTHANSA-REG","rating":"BBB-","sector":"Industrials","marketCap":9.6,"inventory":1645.0,"sales":39597.0},{"ticker":"LHX","name":"L3HARRIS TECHNOLOGIES INC","rating":"BBB","sector":"Industrials","marketCap":66.9,"inventory":1219.0,"sales":21865.0},{"ticker":"LIGHT","name":"SIGNIFY NV","rating":"BBB-","sector":"Industrials","marketCap":2.4,"inventory":929.0,"sales":5765.0},{"ticker":"LII","name":"LENNOX INTERNATIONAL INC","rating":"BBB","sector":"Industrials","marketCap":18.0,"inventory":1153.0,"sales":5195.0},{"ticker":"LIN","name":"LINDE PLC","rating":"A","sector":"Materials","marketCap":235.8,"inventory":2055.0,"sales":33986.0},{"ticker":"LKQ","name":"LKQ CORP","rating":"BBB-","sector":"Consumer Discretionary","marketCap":7.7,"inventory":3426.0,"sales":13651.0},{"ticker":"LLY","name":"ELI LILLY & CO","rating":"A+","sector":"Health Care","marketCap":878.3,"inventory":13744.0,"sales":65179.0},{"ticker":"LMT","name":"LOCKHEED MARTIN CORP","rating":"A-","sector":"Industrials","marketCap":142.8,"inventory":3524.0,"sales":75048.0},{"ticker":"LNG","name":"CHENIERE ENERGY INC","rating":"BBB","sector":"Energy","marketCap":55.0,"inventory":524.0,"sales":19976.0},{"ticker":"LNT","name":"ALLIANT ENERGY CORP","rating":"BBB+","sector":"Utilities","marketCap":18.7,"inventory":288.0,"sales":4362.0},{"ticker":"LONN","name":"LONZA GROUP AG-REG","rating":"BBB+","sector":"Health Care","marketCap":38.2,"inventory":1680.0,"sales":6531.0},{"ticker":"LOOMIS","name":"LOOMIS AB","rating":"BBB","sector":"Industrials","marketCap":32.1,"inventory":587.0,"sales":30427.0},{"ticker":"LOW","name":"LOWE'S COS INC","rating":"BBB+","sector":"Consumer Discretionary","marketCap":138.4,"inventory":17409.0,"sales":83674.0},{"ticker":"LR","name":"LEGRAND SA","rating":"A-","sector":"Industrials","marketCap":39.6,"inventory":1467.0,"sales":9481.0},{"ticker":"LRCX","name":"LAM RESEARCH CORP","rating":"A-","sector":"Information Technology","marketCap":333.8,"inventory":4308.0,"sales":18436.0},{"ticker":"LUNDB","name":"LUNDBERGS AB-B SHS","rating":"A+","sector":"Financials","marketCap":142.1,"inventory":6717.0,"sales":28781.0},{"ticker":"LUV","name":"SOUTHWEST AIRLINES CO","rating":"BBB","sector":"Industrials","marketCap":19.4,"inventory":775.0,"sales":28063.0},{"ticker":"LYB","name":"LYONDELLBASELL INDU-CL A","rating":"BBB","sector":"Materials","marketCap":24.4,"inventory":3533.0,"sales":30153.0},{"ticker":"MAERSKB","name":"AP MOLLER-MAERSK A/S-B","rating":"BBB+","sector":"Industrials","marketCap":240.9,"inventory":1391.0,"sales":53988.0},{"ticker":"MAS","name":"MASCO CORP","rating":"BBB","sector":"Industrials","marketCap":13.0,"inventory":1046.0,"sales":7562.0},{"ticker":"MAT","name":"MATTEL INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":4.4,"inventory":563.0,"sales":5348.0},{"ticker":"MBG","name":"MERCEDES-BENZ GROUP AG","rating":"A","sector":"Consumer Discretionary","marketCap":50.3,"inventory":23933.0,"sales":132214.0},{"ticker":"MC","name":"LVMH MOET HENNESSY LOUIS VUI","rating":"AA-","sector":"Consumer Discretionary","marketCap":248.5,"inventory":22659.0,"sales":80807.0},{"ticker":"MCK","name":"MCKESSON CORP","rating":"BBB+","sector":"Health Care","marketCap":105.9,"inventory":23001.0,"sales":359051.0},{"ticker":"MDLZ","name":"MONDELEZ INTERNATIONAL INC-A","rating":"BBB","sector":"Consumer Staples","marketCap":74.0,"inventory":4419.0,"sales":38537.0},{"ticker":"MDT","name":"MEDTRONIC PLC","rating":"A","sector":"Health Care","marketCap":110.7,"inventory":5476.0,"sales":33537.0},{"ticker":"METSB","name":"METSA BOARD OYJ-B","rating":"BBB-","sector":"Materials","marketCap":1.1,"inventory":374.0,"sales":1776.0},{"ticker":"METSO","name":"METSO CORP","rating":"BBB","sector":"Industrials","marketCap":13.9,"inventory":1903.0,"sales":5240.0},{"ticker":"MG","name":"MAGNA INTERNATIONAL INC","rating":"A-","sector":"Consumer Discretionary","marketCap":22.3,"inventory":4126.0,"sales":42010.0},{"ticker":"MHK","name":"MOHAWK INDUSTRIES INC","rating":"BBB+","sector":"Consumer Discretionary","marketCap":6.4,"inventory":2662.0,"sales":10785.0},{"ticker":"MKC","name":"MCCORMICK & CO-NON VTG SHRS","rating":"BBB","sector":"Consumer Staples","marketCap":14.6,"inventory":1272.0,"sales":6840.0},{"ticker":"ML","name":"MICHELIN (CGDE)","rating":"A","sector":"Consumer Discretionary","marketCap":22.3,"inventory":5093.0,"sales":25992.0},{"ticker":"MLM","name":"MARTIN MARIETTA MATERIALS","rating":"BBB+","sector":"Materials","marketCap":38.3,"inventory":1078.0,"sales":6150.0},{"ticker":"MMM","name":"3M CO","rating":"BBB+","sector":"Industrials","marketCap":79.8,"inventory":3661.0,"sales":24948.0},{"ticker":"MNDI","name":"MONDI PLC","rating":"A-","sector":"Materials","marketCap":3.8,"inventory":1213.0,"sales":7663.0},{"ticker":"MO","name":"ALTRIA GROUP INC","rating":"BBB","sector":"Consumer Staples","marketCap":111.7,"inventory":1070.0,"sales":20139.0},{"ticker":"MOS","name":"MOSAIC CO/THE","rating":"BBB","sector":"Materials","marketCap":7.8,"inventory":3363.0,"sales":12052.0},{"ticker":"MPC","name":"MARATHON PETROLEUM CORP","rating":"BBB","sector":"Energy","marketCap":66.3,"inventory":10129.0,"sales":132699.0},{"ticker":"MRK","name":"MERCK & CO. INC.","rating":"A+","sector":"Health Care","marketCap":296.8,"inventory":6658.0,"sales":65011.0},{"ticker":"MRK.DE","name":"MERCK KGAA","rating":"A","sector":"Health Care","marketCap":51.2,"inventory":4562.0,"sales":21102.0},{"ticker":"MRU","name":"METRO INC/CN","rating":"BBB","sector":"Consumer Staples","marketCap":19.6,"inventory":1604.0,"sales":22007.0},{"ticker":"MRVL","name":"MARVELL TECHNOLOGY INC","rating":"BBB-","sector":"Information Technology","marketCap":114.8,"inventory":1030.0,"sales":5767.0},{"ticker":"MSFT","name":"MICROSOFT CORP","rating":"AAA","sector":"Information Technology","marketCap":2854.2,"inventory":938.0,"sales":281724.0},{"ticker":"MSI","name":"MOTOROLA SOLUTIONS INC","rating":"BBB","sector":"Information Technology","marketCap":73.1,"inventory":983.0,"sales":11682.0},{"ticker":"MT","name":"ARCELORMITTAL","rating":"BBB-","sector":"Materials","marketCap":41.4,"inventory":18589.0,"sales":61352.0},{"ticker":"MTH","name":"MERITAGE HOMES CORP","rating":"BBB-","sector":"Consumer Discretionary","marketCap":4.4,"inventory":5987.0,"sales":5861.0},{"ticker":"MU","name":"MICRON TECHNOLOGY INC","rating":"BBB-","sector":"Information Technology","marketCap":481.0,"inventory":8355.0,"sales":37378.0},{"ticker":"NDSN","name":"NORDSON CORP","rating":"BBB","sector":"Industrials","marketCap":15.5,"inventory":445.0,"sales":2792.0},{"ticker":"NEE","name":"NEXTERA ENERGY INC","rating":"A-","sector":"Utilities","marketCap":192.5,"inventory":2420.0,"sales":27412.0},{"ticker":"NEM","name":"NEWMONT CORP","rating":"BBB+","sector":"Materials","marketCap":125.8,"inventory":2689.0,"sales":22669.0},{"ticker":"NESN","name":"NESTLE SA-REG","rating":"AA-","sector":"Consumer Staples","marketCap":203.6,"inventory":12813.0,"sales":89885.0},{"ticker":"NEU","name":"NEWMARKET CORP","rating":"BBB+","sector":"Materials","marketCap":6.2,"inventory":502.0,"sales":2725.0},{"ticker":"NG/","name":"NATIONAL GRID PLC","rating":"BBB+","sector":"Utilities","marketCap":63.4,"inventory":557.0,"sales":18378.0},{"ticker":"NHY","name":"NORSK HYDRO ASA","rating":"BBB","sector":"Materials","marketCap":203.4,"inventory":27796.0,"sales":207971.0},{"ticker":"NI","name":"NISOURCE INC","rating":"BBB+","sector":"Utilities","marketCap":22.6,"inventory":450.0,"sales":6642.0},{"ticker":"NK","name":"IMERYS SA","rating":"BBB-","sector":"Materials","marketCap":1.9,"inventory":698.0,"sales":3384.0},{"ticker":"NKE","name":"NIKE INC -CL B","rating":"AA-","sector":"Consumer Discretionary","marketCap":63.5,"inventory":7489.0,"sales":46309.0},{"ticker":"NOC","name":"NORTHROP GRUMMAN CORP","rating":"BBB+","sector":"Industrials","marketCap":96.8,"inventory":1309.0,"sales":41954.0},{"ticker":"NOKIA","name":"NOKIA OYJ","rating":"BBB-","sector":"Information Technology","marketCap":49.6,"inventory":2209.0,"sales":19889.0},{"ticker":"NOV","name":"NOV INC","rating":"BBB","sector":"Energy","marketCap":7.1,"inventory":1799.0,"sales":8744.0},{"ticker":"NOVN","name":"NOVARTIS AG-REG","rating":"AA-","sector":"Health Care","marketCap":241.8,"inventory":6269.0,"sales":56674.0},{"ticker":"NOVOB","name":"NOVO NORDISK A/S-B","rating":"AA-","sector":"Health Care","marketCap":1162.7,"inventory":49623.0,"sales":309064.0},{"ticker":"NSC","name":"NORFOLK SOUTHERN CORP","rating":"BBB+","sector":"Industrials","marketCap":66.8,"inventory":271.0,"sales":12180.0},{"ticker":"NTAP","name":"NETAPP INC","rating":"BBB+","sector":"Information Technology","marketCap":19.4,"inventory":186.0,"sales":6572.0},{"ticker":"NTGY","name":"NATURGY ENERGY GROUP SA","rating":"BBB","sector":"Utilities","marketCap":25.9,"inventory":1003.0,"sales":19455.0},{"ticker":"NTR","name":"NUTRIEN LTD","rating":"BBB","sector":"Materials","marketCap":49.4,"inventory":6977.0,"sales":26885.0},{"ticker":"NUE","name":"NUCOR CORP","rating":"A-","sector":"Materials","marketCap":43.2,"inventory":5462.0,"sales":32494.0},{"ticker":"NVDA","name":"NVIDIA CORP","rating":"AA-","sector":"Information Technology","marketCap":4600.2,"inventory":10080.0,"sales":130497.0},{"ticker":"NVR","name":"NVR INC","rating":"BBB+","sector":"Consumer Discretionary","marketCap":18.8,"inventory":1724.0,"sales":10324.0},{"ticker":"NVT","name":"NVENT ELECTRIC PLC","rating":"BBB-","sector":"Industrials","marketCap":21.8,"inventory":472.0,"sales":3893.0},{"ticker":"NWSA","name":"NEWS CORP - CLASS A","rating":"BBB-","sector":"Communication Services","marketCap":14.5,"inventory":327.0,"sales":8452.0},{"ticker":"NXPI","name":"NXP SEMICONDUCTORS NV","rating":"BBB+","sector":"Information Technology","marketCap":54.6,"inventory":2577.0,"sales":12269.0},{"ticker":"NXT","name":"NEXT PLC","rating":"BBB","sector":"Consumer Discretionary","marketCap":16.2,"inventory":865.0,"sales":6118.0},{"ticker":"OC","name":"OWENS CORNING","rating":"BBB","sector":"Industrials","marketCap":9.5,"inventory":1472.0,"sales":10103.0},{"ticker":"OGE","name":"OGE ENERGY CORP","rating":"BBB+","sector":"Utilities","marketCap":10.0,"inventory":325.0,"sales":3260.0},{"ticker":"OGS","name":"ONE GAS INC","rating":"A-","sector":"Utilities","marketCap":5.6,"inventory":274.0,"sales":2427.0},{"ticker":"OKE","name":"ONEOK INC","rating":"BBB","sector":"Energy","marketCap":53.8,"inventory":948.0,"sales":33629.0},{"ticker":"OMC","name":"OMNICOM GROUP","rating":"BBB+","sector":"Communication Services","marketCap":21.7,"inventory":3409.0,"sales":17272.0},{"ticker":"OR","name":"L'OREAL","rating":"AA","sector":"Consumer Staples","marketCap":190.4,"inventory":4543.0,"sales":44052.0},{"ticker":"ORA","name":"ORANGE","rating":"BBB+","sector":"Communication Services","marketCap":45.6,"inventory":743.0,"sales":40397.0},{"ticker":"ORLY","name":"O'REILLY AUTOMOTIVE INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":78.7,"inventory":5731.0,"sales":17782.0},{"ticker":"ORSTED","name":"ORSTED A/S","rating":"BBB","sector":"Utilities","marketCap":205.7,"inventory":9938.0,"sales":73244.0},{"ticker":"OSK","name":"OSHKOSH CORP","rating":"BBB","sector":"Industrials","marketCap":9.5,"inventory":2375.0,"sales":10422.0},{"ticker":"OTIS","name":"OTIS WORLDWIDE CORP","rating":"BBB","sector":"Industrials","marketCap":31.8,"inventory":613.0,"sales":14431.0},{"ticker":"PAA","name":"PLAINS ALL AMER PIPELINE LP","rating":"BBB","sector":"Energy","marketCap":15.3,"inventory":211.0,"sales":44262.0},{"ticker":"PAAS","name":"PAN AMERICAN SILVER CORP","rating":"BBB-","sector":"Materials","marketCap":33.4,"inventory":588.0,"sales":3619.0},{"ticker":"PCAR","name":"PACCAR INC","rating":"A+","sector":"Industrials","marketCap":67.0,"inventory":2188.0,"sales":28445.0},{"ticker":"PEG","name":"PUBLIC SERVICE ENTERPRISE GP","rating":"BBB+","sector":"Utilities","marketCap":40.5,"inventory":1155.0,"sales":12168.0},{"ticker":"PEP","name":"PEPSICO INC","rating":"A+","sector":"Consumer Staples","marketCap":213.1,"inventory":5845.0,"sales":93925.0},{"ticker":"PFE","name":"PFIZER INC","rating":"A","sector":"Health Care","marketCap":155.5,"inventory":10654.0,"sales":62579.0},{"ticker":"PG","name":"PROCTER & GAMBLE CO/THE","rating":"AA-","sector":"Consumer Staples","marketCap":333.7,"inventory":7551.0,"sales":84284.0},{"ticker":"PH","name":"PARKER HANNIFIN CORP","rating":"BBB+","sector":"Industrials","marketCap":124.9,"inventory":2839.0,"sales":19850.0},{"ticker":"PHIA","name":"KONINKLIJKE PHILIPS NV","rating":"BBB+","sector":"Health Care","marketCap":24.4,"inventory":2870.0,"sales":17834.0},{"ticker":"PHM","name":"PULTEGROUP INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":23.3,"inventory":12906.0,"sales":17312.0},{"ticker":"PII","name":"POLARIS INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":3.1,"inventory":1412.0,"sales":7152.0},{"ticker":"PIRC","name":"PIRELLI & C SPA","rating":"BBB-","sector":"Consumer Discretionary","marketCap":6.7,"inventory":1468.0,"sales":6776.0},{"ticker":"PKG","name":"PACKAGING CORP OF AMERICA","rating":"BBB","sector":"Materials","marketCap":18.7,"inventory":1243.0,"sales":8989.0},{"ticker":"PM","name":"PHILIP MORRIS INTERNATIONAL","rating":"A-","sector":"Consumer Staples","marketCap":253.7,"inventory":11478.0,"sales":40648.0},{"ticker":"PNDORA","name":"PANDORA A/S","rating":"BBB","sector":"Consumer Discretionary","marketCap":39.5,"inventory":4883.0,"sales":32549.0},{"ticker":"PNR","name":"PENTAIR PLC","rating":"BBB-","sector":"Industrials","marketCap":14.7,"inventory":633.0,"sales":4176.0},{"ticker":"PNW","name":"PINNACLE WEST CAPITAL","rating":"BBB+","sector":"Utilities","marketCap":12.4,"inventory":565.0,"sales":5340.0},{"ticker":"PPC","name":"PILGRIM'S PRIDE CORP","rating":"BBB-","sector":"Consumer Staples","marketCap":8.5,"inventory":2031.0,"sales":18498.0},{"ticker":"PPG","name":"PPG INDUSTRIES INC","rating":"BBB+","sector":"Materials","marketCap":24.7,"inventory":1996.0,"sales":15875.0},{"ticker":"PPL","name":"PEMBINA PIPELINE CORP","rating":"BBB","sector":"Energy","marketCap":35.3,"inventory":284.0,"sales":7987.0},{"ticker":"PPL","name":"PPL CORP","rating":"A-","sector":"Utilities","marketCap":29.7,"inventory":551.0,"sales":9042.0},{"ticker":"PRX","name":"PROSUS NV","rating":"BBB","sector":"Consumer Discretionary","marketCap":105.7,"inventory":255.0,"sales":6170.0},{"ticker":"PRY","name":"PRYSMIAN SPA","rating":"BBB-","sector":"Industrials","marketCap":36.1,"inventory":3066.0,"sales":19650.0},{"ticker":"PSX","name":"PHILLIPS 66","rating":"BBB+","sector":"Energy","marketCap":64.3,"inventory":5097.0,"sales":132376.0},{"ticker":"PUB","name":"PUBLICIS GROUPE","rating":"BBB+","sector":"Communication Services","marketCap":20.4,"inventory":530.0,"sales":17399.0},{"ticker":"PVH","name":"PVH CORP","rating":"BBB-","sector":"Consumer Discretionary","marketCap":4.1,"inventory":1509.0,"sales":8653.0},{"ticker":"PWR","name":"QUANTA SERVICES INC","rating":"BBB","sector":"Industrials","marketCap":89.4,"inventory":370.0,"sales":28480.0},{"ticker":"QCOM","name":"QUALCOMM INC","rating":"A","sector":"Information Technology","marketCap":140.0,"inventory":6526.0,"sales":44284.0},{"ticker":"QRVO","name":"QORVO INC","rating":"BBB-","sector":"Information Technology","marketCap":7.4,"inventory":641.0,"sales":3719.0},{"ticker":"RCI/B","name":"ROGERS COMMUNICATIONS INC-B","rating":"BBB-","sector":"Communication Services","marketCap":24.5,"inventory":550.0,"sales":21712.0},{"ticker":"RCL","name":"ROYAL CARIBBEAN CRUISES LTD","rating":"BBB-","sector":"Consumer Discretionary","marketCap":76.4,"inventory":264.0,"sales":17935.0},{"ticker":"REGN","name":"REGENERON PHARMACEUTICALS","rating":"BBB+","sector":"Health Care","marketCap":78.9,"inventory":3201.0,"sales":14343.0},{"ticker":"REL","name":"RELX PLC","rating":"A-","sector":"Industrials","marketCap":48.6,"inventory":311.0,"sales":9590.0},{"ticker":"REP","name":"REPSOL SA","rating":"BBB+","sector":"Energy","marketCap":21.8,"inventory":5475.0,"sales":54861.0},{"ticker":"RI","name":"PERNOD RICARD SA","rating":"BBB+","sector":"Consumer Staples","marketCap":17.1,"inventory":8418.0,"sales":10959.0},{"ticker":"RIO","name":"RIO TINTO PLC","rating":"A","sector":"Materials","marketCap":127.8,"inventory":6968.0,"sales":57638.0},{"ticker":"RKT","name":"RECKITT BENCKISER GROUP PLC","rating":"A-","sector":"Consumer Staples","marketCap":33.3,"inventory":1473.0,"sales":14205.0},{"ticker":"RL","name":"RALPH LAUREN CORP","rating":"A-","sector":"Consumer Discretionary","marketCap":22.8,"inventory":950.0,"sales":7079.0},{"ticker":"ROG","name":"ROCHE HOLDING AG-GENUSSCHEIN","rating":"AA","sector":"Health Care","marketCap":260.3,"inventory":7479.0,"sales":61516.0},{"ticker":"ROK","name":"ROCKWELL AUTOMATION INC","rating":"A-","sector":"Industrials","marketCap":45.8,"inventory":1247.0,"sales":8342.0},{"ticker":"ROST","name":"ROSS STORES INC","rating":"BBB+","sector":"Consumer Discretionary","marketCap":71.2,"inventory":2445.0,"sales":21129.0},{"ticker":"RPM","name":"RPM INTERNATIONAL INC","rating":"BBB","sector":"Materials","marketCap":14.0,"inventory":1036.0,"sales":7373.0},{"ticker":"RS","name":"RELIANCE INC","rating":"BBB+","sector":"Materials","marketCap":16.6,"inventory":2188.0,"sales":14294.0},{"ticker":"RTX","name":"RTX CORP","rating":"BBB+","sector":"Industrials","marketCap":271.1,"inventory":13364.0,"sales":88603.0},{"ticker":"RVTY","name":"REVVITY INC","rating":"BBB","sector":"Health Care","marketCap":10.4,"inventory":379.0,"sales":2856.0},{"ticker":"SAABB","name":"SAAB AB-B","rating":"BBB+","sector":"Industrials","marketCap":323.6,"inventory":25439.0,"sales":79146.0},{"ticker":"SAF","name":"SAFRAN SA","rating":"A-","sector":"Industrials","marketCap":131.9,"inventory":10285.0,"sales":31189.0},{"ticker":"SAN","name":"SANOFI","rating":"AA","sector":"Health Care","marketCap":99.4,"inventory":10214.0,"sales":46716.0},{"ticker":"SAND","name":"SANDVIK AB","rating":"BBB+","sector":"Industrials","marketCap":507.1,"inventory":33219.0,"sales":120680.0},{"ticker":"SBRY","name":"SAINSBURY (J) PLC","rating":"BBB","sector":"Consumer Staples","marketCap":8.0,"inventory":1946.0,"sales":32812.0},{"ticker":"SBUX","name":"STARBUCKS CORP","rating":"BBB+","sector":"Consumer Discretionary","marketCap":111.1,"inventory":2186.0,"sales":37184.0},{"ticker":"SCAB","name":"SVENSKA CELLULOSA AB SCA-B","rating":"BBB","sector":"Materials","marketCap":77.5,"inventory":6555.0,"sales":20427.0},{"ticker":"SCCO","name":"SOUTHERN COPPER CORP","rating":"BBB+","sector":"Materials","marketCap":160.9,"inventory":1058.0,"sales":13420.0},{"ticker":"SCMN","name":"SWISSCOM AG-REG","rating":"A-","sector":"Communication Services","marketCap":33.7,"inventory":189.0,"sales":15048.0},{"ticker":"SCRVP","name":"SCR-SIBELCO NV - AUC","rating":"BBB-","sector":"Materials","marketCap":1.4,"inventory":222.0,"sales":2237.0},{"ticker":"SDF","name":"K+S AG-REG","rating":"BBB-","sector":"Materials","marketCap":2.6,"inventory":702.0,"sales":3648.0},{"ticker":"SDZ","name":"SANDOZ GROUP AG","rating":"BBB","sector":"Health Care","marketCap":29.6,"inventory":2845.0,"sales":11157.0},{"ticker":"SECUB","name":"SECURITAS AB-B SHS","rating":"BBB","sector":"Industrials","marketCap":98.6,"inventory":1350.0,"sales":155113.0},{"ticker":"SGO","name":"COMPAGNIE DE SAINT GOBAIN","rating":"BBB+","sector":"Industrials","marketCap":40.3,"inventory":6895.0,"sales":46483.0},{"ticker":"SHEL","name":"SHELL PLC","rating":"A+","sector":"Energy","marketCap":179.6,"inventory":22216.0,"sales":266886.0},{"ticker":"SHW","name":"SHERWIN-WILLIAMS CO/THE","rating":"BBB","sector":"Materials","marketCap":82.7,"inventory":2318.0,"sales":23574.0},{"ticker":"SIE","name":"SIEMENS AG-REG","rating":"AA-","sector":"Industrials","marketCap":192.4,"inventory":10582.0,"sales":78914.0},{"ticker":"SIGN","name":"SIG GROUP AG","rating":"BBB-","sector":"Materials","marketCap":4.5,"inventory":370.0,"sales":3249.0},{"ticker":"SIKA","name":"SIKA AG-REG","rating":"A-","sector":"Materials","marketCap":25.2,"inventory":1238.0,"sales":11201.0},{"ticker":"SJM","name":"JM SMUCKER CO/THE","rating":"BBB","sector":"Consumer Staples","marketCap":9.5,"inventory":1209.0,"sales":8726.0},{"ticker":"SLB","name":"SCHLUMBERGER LTD","rating":"A","sector":"Energy","marketCap":77.9,"inventory":5032.0,"sales":35708.0},{"ticker":"SMIN","name":"SMITHS GROUP PLC","rating":"BBB+","sector":"Industrials","marketCap":8.0,"inventory":586.0,"sales":2915.0},{"ticker":"SN/","name":"SMITH & NEPHEW PLC","rating":"BBB+","sector":"Health Care","marketCap":10.8,"inventory":2117.0,"sales":6164.0},{"ticker":"SNA","name":"SNAP-ON INC","rating":"A-","sector":"Industrials","marketCap":19.9,"inventory":1025.0,"sales":5156.0},{"ticker":"SNCVP","name":"SNCB - AUC","rating":"A","sector":"","marketCap":0.1,"inventory":284.0,"sales":1338.0},{"ticker":"SNPS","name":"SYNOPSYS INC","rating":"BBB","sector":"Information Technology","marketCap":80.0,"inventory":365.0,"sales":7054.0},{"ticker":"SNX","name":"TD SYNNEX CORP","rating":"BBB-","sector":"Information Technology","marketCap":16.6,"inventory":9504.0,"sales":62508.0},{"ticker":"SO","name":"SOUTHERN CO/THE","rating":"A-","sector":"Utilities","marketCap":108.2,"inventory":3333.0,"sales":29553.0},{"ticker":"SOLB","name":"SOLVAY SA","rating":"BBB-","sector":"Materials","marketCap":2.9,"inventory":588.0,"sales":4746.0},{"ticker":"SOLV","name":"SOLVENTUM CORP","rating":"BBB-","sector":"Health Care","marketCap":11.7,"inventory":1066.0,"sales":8325.0},{"ticker":"SON","name":"SONOCO PRODUCTS CO","rating":"BBB-","sector":"Materials","marketCap":5.4,"inventory":1121.0,"sales":7519.0},{"ticker":"SRE","name":"SEMPRA","rating":"BBB+","sector":"Utilities","marketCap":62.9,"inventory":561.0,"sales":13702.0},{"ticker":"SRG","name":"SNAM SPA","rating":"A-","sector":"Utilities","marketCap":21.9,"inventory":2092.0,"sales":3852.0},{"ticker":"SRT","name":"SARTORIUS AG","rating":"BBB-","sector":"Health Care","marketCap":15.7,"inventory":792.0,"sales":3538.0},{"ticker":"SSABA","name":"SSAB AB-A SHARES","rating":"BBB-","sector":"Materials","marketCap":84.0,"inventory":28301.0,"sales":96220.0},{"ticker":"SSE","name":"SSE PLC","rating":"BBB+","sector":"Utilities","marketCap":29.9,"inventory":463.0,"sales":10132.0},{"ticker":"STE","name":"STERIS PLC","rating":"BBB","sector":"Health Care","marketCap":22.1,"inventory":581.0,"sales":5460.0},{"ticker":"STLA","name":"STELLANTIS NV","rating":"BBB","sector":"Consumer Discretionary","marketCap":25.0,"inventory":22153.0,"sales":153508.0},{"ticker":"STLD","name":"STEEL DYNAMICS INC","rating":"BBB","sector":"Materials","marketCap":28.3,"inventory":3739.0,"sales":18177.0},{"ticker":"STMPA","name":"STMICROELECTRONICS NV","rating":"BBB+","sector":"Information Technology","marketCap":33.9,"inventory":3136.0,"sales":11800.0},{"ticker":"STR","name":"STRABAG SE-BR","rating":"BBB+","sector":"Industrials","marketCap":10.5,"inventory":1552.0,"sales":17422.0},{"ticker":"STZ","name":"CONSTELLATION BRANDS INC-A","rating":"BBB","sector":"Consumer Staples","marketCap":28.5,"inventory":1437.0,"sales":10209.0},{"ticker":"SU","name":"SCHNEIDER ELECTRIC SE","rating":"A","sector":"Industrials","marketCap":160.8,"inventory":5368.0,"sales":40152.0},{"ticker":"SW","name":"SMURFIT WESTROCK PLC","rating":"BBB","sector":"Materials","marketCap":22.1,"inventory":3693.0,"sales":31179.0},{"ticker":"SW","name":"SODEXO SA","rating":"BBB+","sector":"Consumer Discretionary","marketCap":6.3,"inventory":304.0,"sales":24074.0},{"ticker":"SWK","name":"STANLEY BLACK & DECKER INC","rating":"A-","sector":"Industrials","marketCap":11.2,"inventory":4157.0,"sales":15130.0},{"ticker":"SWKS","name":"SKYWORKS SOLUTIONS INC","rating":"BBB-","sector":"Information Technology","marketCap":8.5,"inventory":755.0,"sales":4087.0},{"ticker":"SYENS","name":"SYENSQO SA","rating":"BBB+","sector":"Materials","marketCap":5.9,"inventory":1081.0,"sales":5969.0},{"ticker":"SYK","name":"STRYKER CORP","rating":"BBB+","sector":"Health Care","marketCap":133.0,"inventory":5310.0,"sales":25116.0},{"ticker":"SYY","name":"SYSCO CORP","rating":"BBB","sector":"Consumer Staples","marketCap":35.1,"inventory":5053.0,"sales":81370.0},{"ticker":"SZU","name":"SUEDZUCKER AG","rating":"BBB","sector":"Consumer Staples","marketCap":2.4,"inventory":2843.0,"sales":9694.0},{"ticker":"T","name":"TELUS CORP","rating":"BBB-","sector":"Communication Services","marketCap":26.0,"inventory":482.0,"sales":20506.0},{"ticker":"T","name":"AT&T INC","rating":"BBB","sector":"Communication Services","marketCap":178.8,"inventory":2420.0,"sales":125648.0},{"ticker":"TAP","name":"MOLSON COORS BEVERAGE CO - B","rating":"BBB","sector":"Consumer Staples","marketCap":8.4,"inventory":716.0,"sales":11141.0},{"ticker":"TATE","name":"TATE & LYLE PLC","rating":"BBB","sector":"Consumer Staples","marketCap":1.6,"inventory":581.0,"sales":1736.0},{"ticker":"TCL/A","name":"TRANSCONTINENTAL INC-CL A","rating":"BBB-","sector":"Materials","marketCap":0.5,"inventory":378.0,"sales":2744.0},{"ticker":"TDY","name":"TELEDYNE TECHNOLOGIES INC","rating":"BBB","sector":"Information Technology","marketCap":30.4,"inventory":1043.0,"sales":6115.0},{"ticker":"TECK/B","name":"TECK RESOURCES LTD-CLS B","rating":"BBB-","sector":"Materials","marketCap":38.7,"inventory":2748.0,"sales":10756.0},{"ticker":"TEF","name":"TELEFONICA SA","rating":"BBB-","sector":"Communication Services","marketCap":21.9,"inventory":862.0,"sales":35120.0},{"ticker":"TEL","name":"TELENOR ASA","rating":"A-","sector":"Communication Services","marketCap":219.3,"inventory":862.0,"sales":76548.0},{"ticker":"TEL","name":"TE CONNECTIVITY PLC","rating":"A-","sector":"Information Technology","marketCap":72.2,"inventory":2699.0,"sales":17262.0},{"ticker":"TEL2B","name":"TELE2 AB-B SHS","rating":"BBB","sector":"Communication Services","marketCap":130.8,"inventory":584.0,"sales":29890.0},{"ticker":"TELIA","name":"TELIA CO AB","rating":"BBB+","sector":"Communication Services","marketCap":181.9,"inventory":1559.0,"sales":80982.0},{"ticker":"TGT","name":"TARGET CORP","rating":"A","sector":"Consumer Staples","marketCap":53.4,"inventory":12740.0,"sales":106566.0},{"ticker":"TJX","name":"TJX COMPANIES INC","rating":"A","sector":"Consumer Discretionary","marketCap":176.3,"inventory":6421.0,"sales":56360.0},{"ticker":"TKR","name":"TIMKEN CO","rating":"BBB-","sector":"Industrials","marketCap":7.5,"inventory":1243.0,"sales":4582.0},{"ticker":"TMO","name":"THERMO FISHER SCIENTIFIC INC","rating":"A-","sector":"Health Care","marketCap":191.1,"inventory":5425.0,"sales":44556.0},{"ticker":"TMUS","name":"T-MOBILE US INC","rating":"BBB","sector":"Communication Services","marketCap":212.0,"inventory":2405.0,"sales":88309.0},{"ticker":"TOL","name":"TOLL BROTHERS INC","rating":"BBB-","sector":"Consumer Discretionary","marketCap":13.4,"inventory":10678.0,"sales":10967.0},{"ticker":"TPR","name":"TAPESTRY INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":30.4,"inventory":861.0,"sales":7011.0},{"ticker":"TRGP","name":"TARGA RESOURCES CORP","rating":"BBB","sector":"Energy","marketCap":51.7,"inventory":429.0,"sales":17028.0},{"ticker":"TRP","name":"TC ENERGY CORP","rating":"BBB+","sector":"Energy","marketCap":89.7,"inventory":782.0,"sales":15239.0},{"ticker":"TSCO","name":"TRACTOR SUPPLY COMPANY","rating":"BBB","sector":"Consumer Discretionary","marketCap":23.9,"inventory":3084.0,"sales":15524.0},{"ticker":"TSCO.GB","name":"TESCO PLC","rating":"BBB-","sector":"Consumer Staples","marketCap":31.0,"inventory":2768.0,"sales":69916.0},{"ticker":"TSLA","name":"TESLA INC","rating":"BBB","sector":"Consumer Discretionary","marketCap":1322.4,"inventory":12392.0,"sales":94827.0},{"ticker":"TSN","name":"TYSON FOODS INC-CL A","rating":"BBB","sector":"Consumer Staples","marketCap":22.7,"inventory":5681.0,"sales":54441.0},{"ticker":"TT","name":"TRANE TECHNOLOGIES PLC","rating":"BBB+","sector":"Industrials","marketCap":105.4,"inventory":2104.0,"sales":21322.0},{"ticker":"TTC","name":"TORO CO","rating":"BBB","sector":"Industrials","marketCap":9.5,"inventory":921.0,"sales":4510.0},{"ticker":"TTE","name":"TOTALENERGIES SE","rating":"A+","sector":"Energy","marketCap":159.9,"inventory":16663.0,"sales":182344.0},{"ticker":"TXN","name":"TEXAS INSTRUMENTS INC","rating":"A+","sector":"Information Technology","marketCap":197.3,"inventory":4804.0,"sales":17682.0},{"ticker":"TXT","name":"TEXTRON INC","rating":"BBB","sector":"Industrials","marketCap":16.2,"inventory":4278.0,"sales":14799.0},{"ticker":"ULVR","name":"UNILEVER PLC","rating":"A+","sector":"Consumer Staples","marketCap":93.9,"inventory":4043.0,"sales":50503.0},{"ticker":"UMG","name":"UNIVERSAL MUSIC GROUP NV","rating":"BBB+","sector":"Communication Services","marketCap":37.9,"inventory":263.0,"sales":12507.0},{"ticker":"UN0","name":"UNIPER SE","rating":"BBB-","sector":"Utilities","marketCap":16.5,"inventory":1677.0,"sales":60954.0},{"ticker":"UNP","name":"UNION PACIFIC CORP","rating":"A-","sector":"Industrials","marketCap":149.2,"inventory":787.0,"sales":24510.0},{"ticker":"UPM","name":"UPM-KYMMENE OYJ","rating":"BBB+","sector":"Materials","marketCap":14.0,"inventory":1885.0,"sales":9656.0},{"ticker":"UVV","name":"UNIVERSAL CORP/VA","rating":"BBB-","sector":"Consumer Staples","marketCap":1.3,"inventory":996.0,"sales":2947.0},{"ticker":"VAR","name":"VAR ENERGI ASA","rating":"BBB","sector":"Energy","marketCap":104.2,"inventory":336.0,"sales":7966.0},{"ticker":"VIE","name":"VEOLIA ENVIRONNEMENT","rating":"BBB","sector":"Utilities","marketCap":26.4,"inventory":1465.0,"sales":44396.0},{"ticker":"VLO","name":"VALERO ENERGY CORP","rating":"BBB","sector":"Energy","marketCap":72.4,"inventory":7591.0,"sales":122687.0},{"ticker":"VLTO","name":"VERALTO CORP","rating":"BBB","sector":"Industrials","marketCap":22.3,"inventory":307.0,"sales":5503.0},{"ticker":"VMC","name":"VULCAN MATERIALS CO","rating":"BBB+","sector":"Materials","marketCap":38.8,"inventory":680.0,"sales":7941.0},{"ticker":"VMI","name":"VALMONT INDUSTRIES","rating":"BBB+","sector":"Industrials","marketCap":8.4,"inventory":566.0,"sales":4104.0},{"ticker":"VNT","name":"VONTIER CORP","rating":"BBB-","sector":"Information Technology","marketCap":5.3,"inventory":326.0,"sales":3076.0},{"ticker":"VOD","name":"VODAFONE GROUP PLC","rating":"BBB","sector":"Communication Services","marketCap":26.4,"inventory":617.0,"sales":37448.0},{"ticker":"VOLVB","name":"VOLVO AB-B SHS","rating":"A","sector":"Industrials","marketCap":667.6,"inventory":65962.0,"sales":479183.0},{"ticker":"VOW","name":"VOLKSWAGEN AG","rating":"BBB+","sector":"Consumer Discretionary","marketCap":46.6,"inventory":56043.0,"sales":321913.0},{"ticker":"VRLA","name":"VERALLIA","rating":"BBB-","sector":"Materials","marketCap":2.3,"inventory":750.0,"sales":3332.0},{"ticker":"VZ","name":"VERIZON COMMUNICATIONS INC","rating":"BBB+","sector":"Communication Services","marketCap":189.9,"inventory":2441.0,"sales":138191.0},{"ticker":"WAB","name":"WABTEC CORP","rating":"BBB","sector":"Industrials","marketCap":45.8,"inventory":2745.0,"sales":11167.0},{"ticker":"WEC","name":"WEC ENERGY GROUP INC","rating":"A-","sector":"Utilities","marketCap":37.9,"inventory":803.0,"sales":9800.0},{"ticker":"WEIR","name":"WEIR GROUP PLC/THE","rating":"BBB-","sector":"Industrials","marketCap":8.3,"inventory":647.0,"sales":2564.0},{"ticker":"WFG","name":"WEST FRASER TIMBER CO LTD","rating":"BBB-","sector":"Materials","marketCap":7.1,"inventory":828.0,"sales":5462.0},{"ticker":"WHR","name":"WHIRLPOOL CORP","rating":"BBB-","sector":"Consumer Discretionary","marketCap":3.6,"inventory":2307.0,"sales":15524.0},{"ticker":"WLK","name":"WESTLAKE CORP","rating":"BBB+","sector":"Materials","marketCap":15.4,"inventory":1653.0,"sales":11170.0},{"ticker":"WMB","name":"WILLIAMS COS INC","rating":"BBB+","sector":"Energy","marketCap":87.5,"inventory":314.0,"sales":11950.0},{"ticker":"WMT","name":"WALMART INC","rating":"AA","sector":"Consumer Staples","marketCap":993.1,"inventory":56435.0,"sales":680985.0},{"ticker":"WN","name":"WESTON (GEORGE) LTD","rating":"BBB+","sector":"Consumer Staples","marketCap":36.6,"inventory":6493.0,"sales":64511.0},{"ticker":"WY","name":"WEYERHAEUSER CO","rating":"BBB","sector":"Real Estate","marketCap":17.9,"inventory":593.0,"sales":6905.0},{"ticker":"XEL","name":"XCEL ENERGY INC","rating":"BBB+","sector":"Utilities","marketCap":50.2,"inventory":761.0,"sales":14669.0},{"ticker":"XOM","name":"EXXON MOBIL CORP","rating":"AA-","sector":"Energy","marketCap":634.5,"inventory":26302.0,"sales":323905.0},{"ticker":"XRAY","name":"DENTSPLY SIRONA INC","rating":"BBB-","sector":"Health Care","marketCap":2.4,"inventory":642.0,"sales":3680.0},{"ticker":"XYL","name":"XYLEM INC","rating":"BBB","sector":"Industrials","marketCap":31.0,"inventory":983.0,"sales":9035.0},{"ticker":"YAR","name":"YARA INTERNATIONAL ASA","rating":"BBB","sector":"Materials","marketCap":131.6,"inventory":3400.0,"sales":15623.0},{"ticker":"ZBH","name":"ZIMMER BIOMET HOLDINGS INC","rating":"BBB","sector":"Health Care","marketCap":18.5,"inventory":2286.0,"sales":8232.0},{"ticker":"ZTS","name":"ZOETIS INC","rating":"BBB","sector":"Health Care","marketCap":50.5,"inventory":2430.0,"sales":9467.0}];
+
+const DEMO_CO={companyName:'GlobalManufacturing Co.',ticker:'DEMO',inventoryValue:4.2,marketCap:68.5,fcfMultiple:28,logoUrl:null,industry:'Industrial Manufacturing'};
+const SHEET_WEBHOOK_URL='https://script.google.com/macros/s/AKfycbyoh15k8aU3vH481NuJ08pKCgOU2I5MShn2e8wrtx7rDb7x9_WERZhSjS33c8B3qXrh/exec';
+let MODE='',CO={},COMPANY={},CQ=0,SCORE=0,ANSWERED=false,TIMER_INT=null,TIME_LEFT=30,LEADS=[],FCF_HISTORY=[0],FCF_TOTAL=0,fcfChart=null;
+
+const BASE_QS=[
+  {ctx:'Inventory pile-up',txt:"It's Q3. You have $INV in raw materials in your warehouse. Interest rates at 6%. Your CFO is asking why working capital is at an all-time high.",opts:['Take a write-down — absorb the loss and clear the books','Transfer ownership to 1TCC — they hold it, you consume on demand','Rush a fire sale to distributors at 20% discount'],correct:1,fcf_ok:280,fcf_bad:-80,fb_ok:'<strong>Optimal.</strong> 1TCC holds the inventory on its own books. You preserve full value, free cash, and move the asset off your balance sheet — fully GAAP and IFRS compliant.',fb_bad:'Write-downs and fire sales destroy value permanently. 1TCC holds inventory and you consume on demand — preserving value, freeing cash, zero write-down.'},
+  {ctx:'Supplier payment crunch',txt:'A critical Tier-1 supplier needs payment in 15 days. Your CCC is $CCC days. Drawing on the revolver would push Net Debt/EBITDA above your covenant threshold.',opts:['Monetize the inventory via 1TCC platform — unlock capital tied up in inventory with no impact on debt or supplier terms','Draw on the revolver — risk the covenant breach','Delay supplier payment — risk the relationship'],correct:0,fcf_ok:120,fcf_bad:-60,fb_ok:"<strong>Smart.</strong> 1TCC's platform unlocks capital tied up in inventory immediately. Covenant preserved, supplier relationship intact, zero new debt.",fb_bad:"Covenant breach signals distress to lenders. Delaying erodes your supplier's trust. 1TCC's platform solves both — capital unlocked with no debt impact."},
+  {ctx:'New product launch',txt:'Procurement needs to commit $300M in long-lead components now. Your balance sheet is already stretched, and leadership is focused on preserving cash and maintaining leverage targets. What do you do?',opts:['Find cheaper suppliers to reduce upfront cost — accept quality risk','Delay the launch — wait for capex to unfreeze','Use 1TCC to fund inventory — secure supply now without using cash or adding debt'],correct:2,fcf_ok:180,fcf_bad:-120,fb_ok:'<strong>Market-winning.</strong> 1TCC funds the $300M in components. You secure supply on time without touching cash or adding debt. Competitors who delayed lose the window permanently.',fb_bad:'Cheaper suppliers risk your launch quality. Delays hand market share to competitors. 1TCC funds the inventory without balance sheet impact.'},
+  {ctx:'Audit & compliance',txt:'External auditors flag that a recent inventory financing arrangement may not qualify for off-balance-sheet treatment under IFRS 16. Restatement risk could affect your credit rating.',opts:['Challenge the auditors — absorb the legal cost','Switch back to on-balance-sheet financing to be safe',"Restructure through 1TCC's VMI model — SAP-native, pre-validated for US GAAP and IFRS"],correct:2,fcf_ok:60,fcf_bad:-40,fb_ok:"<strong>Clean.</strong> 1TCC's VMI structure is pre-validated for audit readiness — full traceability, compliant ownership transfer, zero restatement risk.",fb_bad:"Legal battles are expensive and uncertain. On-balance-sheet financing loads your ratios. 1TCC's model is pre-validated for both US GAAP and IFRS — nothing to restate."},
+  {ctx:'The BCG transformation',txt:"You're midway through a BCG-led transformation. The plan includes supply chain redesign, inventory optimization, and cost restructuring, targeting $600M in working capital improvement over 3 years. The board insists: fund it without increasing debt or delaying impact. What do you do?",opts:['Scale back the program — reduce upfront spend, delay impact','Fund via cash / debt / equity to protect timeline — increase balance sheet pressure','Deploy 1TCC alongside BCG — unlock liquidity from inventory upfront to help self-fund the transformation'],correct:2,fcf_ok:600,fcf_bad:-50,fb_ok:'<strong>The CFO move.</strong> 1TCC unlocks liquidity from inventory from month one. BCG designs the roadmap; 1TCC funds the journey. The transformation becomes self-financing.',fb_bad:'Scaling back delays value. Debt or equity funding increases balance sheet pressure. 1TCC makes the transformation self-funding by releasing working capital from Day 1.'}
+];
+
+function goTo(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='s-leads')renderLeads();if(id==='s-results')renderResults();}
+
+let _kb='';
+document.addEventListener('keydown',e=>{if(!e.key)return;_kb+=e.key.toLowerCase();if(_kb.endsWith('leads')){renderLeads();goTo('s-leads');}if(_kb.length>10)_kb=_kb.slice(-10);});
+
+function selectMode(m){MODE=m;document.getElementById('mc-demo').classList.toggle('sel',m==='demo');document.getElementById('mc-live').classList.toggle('sel',m==='live');const b=document.getElementById('btn-mode-next');b.style.opacity='1';b.style.pointerEvents='auto';}
+function modeNext(){if(!MODE)return;if(MODE==='live'){goTo('s-ticker');}else{CO={...DEMO_CO};COMPANY={inv:CO.inventoryValue*1000,ccc:75,wacc:8,rating:'BBB',optin:true};startGame();}}
+
+function startFromTicker(){
+  if(!document.getElementById('in-optin').checked){
+    const lbl=document.getElementById('optin-label');
+    lbl.style.borderColor='var(--red)';lbl.style.boxShadow='0 0 0 3px rgba(255,82,82,.15)';
+    document.getElementById('optin-error').style.display='block';
+    lbl.scrollIntoView({behavior:'smooth',block:'center'});return;
+  }
+  const inv=parseFloat(document.getElementById('in-inv').value)||1200;
+  const companyName=document.getElementById('in-company').value.trim()||'Your Company';
+  // If ticker was selected from dropdown, use real dataset values
+  if(_tickerSelected){
+    CO={companyName:_tickerSelected.name,ticker:_tickerSelected.ticker,inventoryValue:_tickerSelected.inventory/1000,marketCap:_tickerSelected.marketCap,fcfMultiple:22,logoUrl:null,industry:_tickerSelected.sector||'—'};
+  } else {
+    CO={companyName,ticker:'—',inventoryValue:inv/1000,marketCap:inv/1000*8.3,fcfMultiple:25,logoUrl:null,industry:'—'};
+  }
+  COMPANY={inv,ccc:parseFloat(document.getElementById('in-ccc').value)||75,wacc:parseFloat(document.getElementById('in-wacc').value)||8,rating:document.getElementById('in-rating').value||'BBB',optin:true};
+
+  // ─── LOG GAME START ───────────────────────────────────────────────────────
+  const gameStartLog={
+    event:'game_start',
+    ts:new Date().toISOString(),
+    ts_local:new Date().toLocaleString(),
+    company:CO.companyName,
+    ticker:CO.ticker,
+    industry:CO.industry,
+    inventory_m:COMPANY.inv,
+    ccc_days:COMPANY.ccc,
+    wacc_pct:COMPANY.wacc,
+    credit_rating:COMPANY.rating,
+    mode:MODE,
+    ticker_from_db:_tickerSelected?'yes':'manual',
+    market_cap_b:CO.marketCap||'—'
+  };
+  logGameStart(gameStartLog);
+  console.log('[TCC Game Start]', JSON.stringify(gameStartLog, null, 2));
+
+  startGame();
+}
+
+function logGameStart(data){
+  if(!SHEET_WEBHOOK_URL)return;
+  const blob=new Blob([JSON.stringify(data)],{type:'text/plain'});
+  fetch(SHEET_WEBHOOK_URL,{method:'POST',mode:'no-cors',body:blob}).catch(e=>console.warn('[TCC Log]',e));
+}
+function clearOptinError(){document.getElementById('optin-label').style.borderColor='';document.getElementById('optin-label').style.boxShadow='';document.getElementById('optin-error').style.display='none';}
+
+function startGame(){CQ=0;SCORE=0;ANSWERED=false;FCF_HISTORY=[0];FCF_TOTAL=0;document.getElementById('score-n').textContent='0';initChart();renderGameCoLogo();goTo('s-game');loadQ(0);}
+
+function renderGameCoLogo(){
+  const wrap=document.getElementById('game-co-logo');
+  if(!CO||!CO.companyName){wrap.innerHTML='';return;}
+  if(CO.logoUrl){wrap.innerHTML=`<img src="${CO.logoUrl}" onerror="this.outerHTML='<span class=co-name-txt>${CO.companyName}</span>'" style="height:24px;max-width:80px;object-fit:contain;border-radius:3px;background:var(--white);padding:2px 4px;">`;}
+  else{wrap.innerHTML=`<div class="co-logo-placeholder">${initials(CO.companyName)}</div><span class="co-name-txt">${CO.companyName}</span>`;}
+}
+
+function loadQ(i){
+  ANSWERED=false;
+  const q=buildQ(i);
+  buildDots(i);
+  document.getElementById('q-ctx').textContent=`DECISION ${i+1} / 5 · ${q.ctx}`;
+  document.getElementById('q-txt').textContent=q.txt;
+  const oc=document.getElementById('opts');oc.innerHTML='';
+  ['A','B','C'].forEach((l,idx)=>{const b=document.createElement('button');b.className='opt';b.innerHTML=`<span class="opt-l">${l}</span><span>${q.opts[idx]}</span><span class="opt-ic"></span>`;b.onclick=()=>answer(idx);oc.appendChild(b);});
+  const fb=document.getElementById('fb');fb.className='fb';fb.style.display='';
+  document.getElementById('btn-next').style.display='none';
+  clearInterval(TIMER_INT);TIME_LEFT=60;updateTimer();
+  TIMER_INT=setInterval(()=>{TIME_LEFT--;updateTimer();if(TIME_LEFT<=0){clearInterval(TIMER_INT);if(!ANSWERED)answer(-1);}},1000);
+}
+
+function buildQ(i){const inv=(COMPANY.inv||1200)/1000;const ccc=COMPANY.ccc||75;const q={...BASE_QS[i]};q.txt=q.txt.replace('$INV','$'+inv.toFixed(1)+'B').replace('$CCC',ccc);return q;}
+function buildDots(cur){const c=document.getElementById('pdots');c.innerHTML='';for(let i=0;i<5;i++){const d=document.createElement('div');d.className='pdot'+(i===cur?' active':i<cur?' done':'');c.appendChild(d);}}
+function updateTimer(){const p=(TIME_LEFT/60)*100;const tf=document.getElementById('tbar-f');tf.style.width=p+'%';tf.style.background=TIME_LEFT<=10?'var(--red)':'var(--yellow)';const tx=document.getElementById('q-timer-txt');tx.textContent=TIME_LEFT+'s';tx.className=TIME_LEFT<=10?'urg':'';}
+
+function answer(idx){
+  if(ANSWERED)return;ANSWERED=true;clearInterval(TIMER_INT);
+  const q=BASE_QS[CQ];const ok=idx===q.correct;
+  if(ok)SCORE++;document.getElementById('score-n').textContent=SCORE;
+  document.querySelectorAll('.opt').forEach((b,i)=>{b.disabled=true;if(i===q.correct){b.classList.add('correct','flash');b.querySelector('.opt-ic').textContent='✓';}else if(i===idx&&!ok){b.classList.add('wrong','flash');b.querySelector('.opt-ic').textContent='✗';}});
+  flashScreen(ok?'green':'red');
+  const fb=document.getElementById('fb');fb.style.display='';fb.className='fb show '+(ok?'ok':'bad');
+  document.getElementById('fb-ic').textContent=ok?'✅':'💡';
+  document.getElementById('fb-tx').innerHTML=ok?q.fb_ok:q.fb_bad;
+  const delta=ok?q.fcf_ok:q.fcf_bad;FCF_TOTAL+=delta;FCF_HISTORY.push(FCF_TOTAL);updateChart();
+  document.getElementById('btn-next').style.display='block';
+}
+
+function flashScreen(type){const el=document.getElementById('flash-overlay');el.className='flash-overlay '+type;setTimeout(()=>el.className='flash-overlay',600);}
+
+function initChart(){
+  if(fcfChart){fcfChart.destroy();fcfChart=null;}
+  const canvas=document.getElementById('fcf-chart');canvas.style.maxHeight='130px';
+  const ctx=canvas.getContext('2d');
+  fcfChart=new Chart(ctx,{type:'bar',data:{labels:['Start','Q1','Q2','Q3','Q4','Q5'].slice(0,FCF_HISTORY.length),datasets:[{data:FCF_HISTORY,backgroundColor:FCF_HISTORY.map(v=>v>=0?'rgba(0,208,132,0.55)':'rgba(255,82,82,0.55)'),borderColor:FCF_HISTORY.map(v=>v>=0?'#00d084':'#ff5252'),borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${c.raw}M`},backgroundColor:'#122338',titleColor:'#fff',bodyColor:'rgba(255,255,255,0.7)'}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(255,255,255,0.35)',font:{size:9,family:'Barlow Condensed'}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(255,255,255,0.35)',font:{size:9,family:'Barlow Condensed'},callback:v=>`$${v}M`},grace:'5%'}}}});
+}
+
+function updateChart(){
+  if(!fcfChart)return;
+  fcfChart.data.labels=['Start','Q1','Q2','Q3','Q4','Q5'].slice(0,FCF_HISTORY.length);
+  fcfChart.data.datasets[0].data=FCF_HISTORY;
+  fcfChart.data.datasets[0].backgroundColor=FCF_HISTORY.map(v=>v>=0?'rgba(0,208,132,0.55)':'rgba(255,82,82,0.55)');
+  fcfChart.data.datasets[0].borderColor=FCF_HISTORY.map(v=>v>=0?'#00d084':'#ff5252');
+  fcfChart.update();
+  document.getElementById('chart-headline').textContent=FCF_TOTAL>=0?`$${FCF_TOTAL}M freed so far`:`-$${Math.abs(FCF_TOTAL)}M lost so far`;
+  document.getElementById('chart-headline').style.color=FCF_TOTAL>=0?'var(--green)':'var(--red)';
+}
+
+function nextQ(){CQ++;if(CQ>=5)goTo('s-results');else loadQ(CQ);}
+
+function renderResults(){
+  const mcap=CO.marketCap||68.5;const pfcf=CO.fcfMultiple||28;
+  const fcfImpact=(FCF_TOTAL/1000).toFixed(2);const fcfImpactB=parseFloat(fcfImpact);
+  const mcapIncrease=(fcfImpactB*pfcf).toFixed(1);const newMcap=(Math.round((mcap+parseFloat(mcapIncrease))*10)/10).toFixed(1);
+  CO._fcfImpact='$'+Math.abs(fcfImpactB)+'B';CO._mcapNew='$'+newMcap+'B';
+  const milestones=[50,100,200,300,500,750,1000,1500,2000];let milestone=null;
+  for(const m of milestones){if(mcap<m&&parseFloat(newMcap)>=m){milestone=m;break;}}
+  const rlogo=document.getElementById('results-co-logo');
+  if(CO.logoUrl){rlogo.innerHTML=`<img src="${CO.logoUrl}" onerror="this.outerHTML='<div class=cp-logo-ph style=width:36px;height:36px;>${initials(CO.companyName||'')}</div>'" style="width:36px;height:36px;border-radius:5px;object-fit:contain;background:var(--white);padding:2px;">`;}
+  else{rlogo.innerHTML=`<div class="cp-logo-ph" style="width:36px;height:36px;">${initials(CO.companyName||'GM')}</div>`;}
+  document.getElementById('results-co-name').textContent=CO.companyName||'Your Company';
+  document.getElementById('rf-fcf').textContent=(fcfImpactB>=0?'+$'+fcfImpact+'B':'-$'+Math.abs(fcfImpact)+'B');
+  document.getElementById('rf-fcf-sub').textContent=`Your inventory program freed $${Math.abs(fcfImpact)}B in cash — ${fcfImpactB>=0?'increasing':'reducing'} Free Cash Flow by $${Math.abs(fcfImpact)}B`;
+  const dir=parseFloat(mcapIncrease)>=0;
+  document.getElementById('rf-mcap').innerHTML=`$${mcap}B <span style="color:var(--w30);font-size:18px">→</span> <span class="${dir?'pos':''}">$${newMcap}B</span>`;
+  document.getElementById('rf-mcap-sub').textContent=`Using your P/FCF multiple of ${pfcf}×, a $${Math.abs(fcfImpact)}B FCF ${dir?'improvement':'decline'} implies a potential $${Math.abs(mcapIncrease)}B change in market cap`;
+  const ms=document.getElementById('rf-milestone');
+  if(milestone){ms.innerHTML=`<div class="milestone-badge">🎯 You could cross the $${milestone>=1000?milestone/1000+'T':milestone+'B'} milestone</div>`;}else{ms.innerHTML='';}
+  const co=CO.companyName||'Your company';
+  const titles=['Needs work','Getting there','Solid instincts','Strong CFO','Optimal CFO'];
+  document.getElementById('r-insight').innerHTML=`<strong>${co}</strong> — ${titles[SCORE]} (${SCORE}/5). The optimal 1TCC strategy would free <strong>$${Math.abs(fcfImpact)}B</strong> in inventory, deliver incremental FCF of <strong>$${Math.abs(fcfImpact)}B</strong>, and translate into a potential <strong>$${Math.abs(mcapIncrease)}B</strong> market cap uplift — with <strong>zero added debt</strong> on the balance sheet.`;
+  spawnParticles();
+}
+
+function submitEmail(){
+  const name=document.getElementById('em-name').value.trim();
+  const email=document.getElementById('em-email').value.trim();
+  if(!name||!email||!email.includes('@')){['em-name','em-email'].forEach(id=>{const el=document.getElementById(id);if(!el.value.trim())el.style.outline='2px solid var(--red)';el.addEventListener('input',()=>el.style.outline='',{once:true});});return;}
+  const lead={ts:new Date().toISOString(),ts_local:new Date().toLocaleString(),name,email,company:CO.companyName||'—',ticker:CO.ticker||'—',inv:COMPANY.inv||'—',ccc:COMPANY.ccc||'—',mode:MODE,score:SCORE+'/5',fcf:CO._fcfImpact||'—',mcap:CO._mcapNew||'—'};
+  LEADS.push(lead);
+  try{localStorage.setItem('tcc_leads',JSON.stringify(LEADS));}catch(e){}
+  sendToGoogleSheets(lead);
+  console.log('[TCC Email to]',email,'\n\n'+buildEmailBody(lead));
+  let s=`<strong>Email:</strong> ${email}<br><strong>Company:</strong> ${CO.companyName||'—'}<br>`;
+  if(CO._fcfImpact)s+=`<strong>FCF Impact:</strong> ${CO._fcfImpact}<br>`;
+  if(CO._mcapNew)s+=`<strong>Market cap →</strong> ${CO._mcapNew}`;
+  document.getElementById('conf-summary').innerHTML=s;
+  goTo('s-confirm');spawnParticles();
+}
+
+function sendToGoogleSheets(lead){
+  if(!SHEET_WEBHOOK_URL){console.log('[TCC Sheets]',lead);return;}
+  const blob=new Blob([JSON.stringify(lead)],{type:'text/plain'});
+  fetch(SHEET_WEBHOOK_URL,{method:'POST',mode:'no-cors',body:blob}).catch(e=>console.warn('[TCC Sheets]',e));
+}
+
+/*
+── ОБНОВИ APPS SCRIPT (script.google.com) ──────────────────────────────────
+function doPost(e) {
+  const d = JSON.parse(e.postData.contents);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  if (d.event === 'game_start') {
+    const s = ss.getSheetByName('GameStarts') || ss.insertSheet('GameStarts');
+    if (s.getLastRow() === 0)
+      s.appendRow(['Timestamp','Timestamp Local','Company','Ticker','Industry',
+                   'Inventory($M)','CCC(days)','WACC(%)','Rating','Mode','Source','MarketCap($B)']);
+    s.appendRow([d.ts,d.ts_local,d.company,d.ticker,d.industry,
+                 d.inventory_m,d.ccc_days,d.wacc_pct,d.credit_rating,d.mode,d.ticker_from_db,d.market_cap_b]);
+  } else {
+    const s = ss.getSheetByName('Leads') || ss.insertSheet('Leads');
+    if (s.getLastRow() === 0)
+      s.appendRow(['Timestamp','Name','Email','Company','Inventory(M)','CCC','Mode','Score','FCF Impact','MCap Upside']);
+    s.appendRow([d.ts_local,d.name,d.email,d.company,d.inv,d.ccc,d.mode,d.score,d.fcf,d.mcap]);
+  }
+  return ContentService.createTextOutput('OK');
+}
+─────────────────────────────────────────────────────────────────────────────
+*/
+
+function buildEmailBody(lead){
+  const co=lead.company&&lead.company!=='—'?lead.company:'your company';
+  const titles=['Needs work','Getting there','Solid instincts','Strong CFO','Optimal CFO'];
+  const sc=parseInt(lead.score);const title=titles[isNaN(sc)?2:Math.min(sc,4)]||'Strong CFO';
+  return `Hi ${lead.name||'there'},
+
+Thank you for playing The $1B Decision at our booth today.
+
+YOUR RESULTS
+─────────────────────────────────────────
+CFO score: ${lead.score} — ${title}
+${lead.company&&lead.company!=='—'?'Company: '+lead.company+'\n':''}
+HOW 1TCC DELIVERS RESULT
+─────────────────────────────────────────
+Based on your game decisions, you've seen how 1TCC's capital-backed
+model can transform a company's supply chain financials. Here is how
+it works in practice.
+
+1TCC purchases and holds your inventory — often $200M or more — on our
+own books, fully compliant with US GAAP and IFRS. This compresses your
+CCC, frees working capital, and improves your credit ratios without
+adding a single dollar of debt to your balance sheet.
+
+NEXT STEPS
+─────────────────────────────────────────
+A member of our team will reach out within 48 hours to walk you through
+a full CII analysis tailored to ${co}.
+
+In the meantime, feel free to reply to this email with any questions.
+
+Best regards,
+The 1TCC Team
+team@1tcc.com | www.1tcc.com
+
+─────────────────────────────────────────
+You received this email because you participated in The $1B Decision
+experience at a 1TCC event and consented to be contacted.
+
+If you no longer wish to receive communications from 1TCC, please reply
+to this email with the subject line "Unsubscribe" and we will remove you
+from our contact list within 5 business days.
+
+1TCC · team@1tcc.com · www.1tcc.com
+`;}
+
+function renderLeads(){
+  try{const s=localStorage.getItem('tcc_leads');if(s)LEADS=JSON.parse(s);}catch(e){}
+  const tb=document.getElementById('lead-tbody');tb.innerHTML='';
+  if(!LEADS.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--w30)">No leads yet.</td></tr>';return;}
+  LEADS.forEach((l,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td style="white-space:nowrap">${l.ts_local||l.ts}</td><td>${l.name}</td><td style="color:var(--yellow)">${l.email}</td><td><strong>${l.company}</strong></td><td>${l.inv?l.inv+'M':'—'}</td><td>${l.ccc?l.ccc+'d':'—'}</td><td>${l.mode}</td><td style="color:var(--yellow);font-weight:700">${l.score}</td><td style="color:var(--green)">${l.fcf||'—'}</td><td style="color:var(--green)">${l.mcap||'—'}</td>`;tb.appendChild(tr);});
+  document.getElementById('lead-count').textContent=LEADS.length+' lead'+(LEADS.length!==1?'s':'')+' captured';
+}
+function clearLeads(){if(confirm('Clear all leads?')){LEADS=[];localStorage.removeItem('tcc_leads');renderLeads();}}
+function exportLeads(){
+  const hdr=['#','Timestamp','Name','Email','Company','Inventory(M)','CCC','Mode','Score','FCFImpact','MCap'];
+  const rows=LEADS.map((l,i)=>[i+1,l.ts_local,l.name,l.email,l.company,l.inv,l.ccc,l.mode,l.score,l.fcf,l.mcap]);
+  const csv=[hdr,...rows].map(r=>r.map(v=>'"'+(v||'').toString().replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='1TCC_leads_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+function initials(name){if(!name||typeof name!=='string')return'CO';return name.trim().split(/\s+/).slice(0,2).map(w=>w&&w[0]?w[0].toUpperCase():'').join('')||'CO';}
+function spawnParticles(){['💰','📈','✅','🏆','💵'].forEach((e,j)=>{for(let i=0;i<4;i++)setTimeout(()=>{const el=document.createElement('div');el.className='ptcl';el.textContent=e;el.style.left=(5+Math.random()*90)+'vw';el.style.top=(20+Math.random()*60)+'vh';el.style.animationDuration=(1+Math.random())+'s';document.body.appendChild(el);setTimeout(()=>el.remove(),2000);},j*60+i*100);});}
+
+// ─── TICKER DROPDOWN ─────────────────────────────────────────────────────────
+let _tickerSelected=null;
+
+function applyTickerFromSelect(ticker){
+  if(!ticker){
+    document.getElementById('ticker-match-badge').classList.remove('show');
+    _tickerSelected=null;
+    return;
+  }
+  applyTicker(ticker);
+}
+
+function applyTicker(ticker){
+  const co=COMPANY_DB.find(c=>c.ticker===ticker);
+  if(!co)return;
+  _tickerSelected=co;
+  document.getElementById('in-company').value=co.name;
+  document.getElementById('in-inv').value=co.inventory;
+  const estCCC=Math.round((co.inventory/co.sales)*365);
+  document.getElementById('in-ccc').value=Math.min(Math.max(estCCC,10),180);
+  document.getElementById('in-wacc').value=8;
+  const rMap={'AAA':'AAA','AA+':'AA','AA':'AA','AA-':'AA','A+':'A','A':'A','A-':'A','BBB+':'BBB','BBB':'BBB','BBB-':'BBB','BB+':'BB','BB':'BB','BB-':'BB','B+':'B','B':'B'};
+  document.getElementById('in-rating').value=rMap[co.rating]||'';
+  const badge=document.getElementById('ticker-match-badge');
+  document.getElementById('ticker-match-text').textContent=co.name+(co.sector?' · '+co.sector:'');
+  badge.classList.add('show');
+}
+
+try{const s=localStorage.getItem('tcc_leads');if(s)LEADS=JSON.parse(s);}catch(e){}
+</script>
+</body>
+</html>
